@@ -196,7 +196,7 @@ export function getUsername(username){
 
         if(check) return reject("User is already in database")
 
-        resolve()
+        resolve(user)
 
         await database.awaitQuery(`INSERT INTO users
             (userid, username, username_safe, country, added)

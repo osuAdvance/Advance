@@ -6,8 +6,8 @@ export default async function(){
 
     fastify.get('/:username/create', async (req, reply) => {
         try {
-            await getUsername(req.params.username)
-            return reply.send({ message: "Added to the system" })
+            const result = await getUsername(req.params.username)
+            return reply.send(result)
         } catch (e) {
             return reply.send({ error: e })
         }
