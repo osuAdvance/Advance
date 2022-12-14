@@ -8,7 +8,7 @@ const logger = new Logger().addTimestamp("hh:mm:ss").changeTag("Cron").purple()
 export default async function(){
     function update(){
         return new Promise(async (resolve) => {
-            const users = await database.awaitQuery(`SELECT userid FROM users`)
+            const users = await database.awaitQuery(`SELECT userid FROM users WHERE available = 1`)
 
             logger.send(`Updating ${users.length} Users`)
 
@@ -17,8 +17,8 @@ export default async function(){
             for(let i = 0; i < users.length; i++){
                 payload.push(users[i].userid)
                 if(payload.length == 50 || i == users.length - 1){
+                    logger.send(`Updating Payload ${Math.floor((users.length - i) / 50)}/${Math.floor(users.length / 50 )}`)
                     await getUser(payload)
-                    await sleep(1000)
                     payload.length = 0;
                 }
             }

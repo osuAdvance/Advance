@@ -7,6 +7,8 @@ export default function getUser(id, first = false){ //2-5 Requests -> 100-250 (5
     return new Promise(async (resolve, reject) => {
         if(typeof(id) != "object") return reject("ID need to be in an array.")
 
+        id.sort((a, b) => a - b)
+
         let users;
 
         try {
@@ -29,8 +31,10 @@ export default function getUser(id, first = false){ //2-5 Requests -> 100-250 (5
 
             pos++
 
-            getInfo(user, id[i])
-            const modes = first ? ["osu", "taiko", "fruits", "mania"] : await getStats(user.id, user.statistics_rulesets)
+            getInfo(user, user.id)
+            
+            let modes = await getStats(user.id, user.statistics_rulesets)
+            modes = first ? ["osu", "taiko", "fruits", "mania"] : modes
 
             for(let j = 0; j < modes.length; j++){
                 getScores(user.id, modes[j])
@@ -68,11 +72,12 @@ function getStats(id, stats){
 
         for(const m in modes){
             const mode = modes[m]
+            if(!stats) continue;
             const stat = stats[mode]
-            if(stat.global_rank == null) continue;
+            if(!stat?.is_ranked) continue;
 
             const rank = (await database.awaitQuery(`SELECT * FROM stats
-            WHERE user = ${user.id} AND mode = ${mode} AND time > ${currentTime - (60 * 60 * 24)} `))[0]
+            WHERE user = ${id} AND mode = ${m} AND time > ${currentTime - (60 * 60 * 24)} `))[0]
 
             if(!rank){
                 database.awaitQuery(`INSERT INTO stats 
@@ -81,7 +86,7 @@ function getStats(id, stats){
                     id, stat.global_rank, stat.country_rank, Math.floor(stat.pp),
                     stat.hit_accuracy, stat.play_count, stat.play_time, stat.ranked_score,
                     stat.total_hits, stat.level.current, stat.level.progress,
-                    mode, currentTime
+                    m, currentTime
                 ])
                 result.add(mode)
                 if(m == 3) resolve([...result])
@@ -92,7 +97,7 @@ function getStats(id, stats){
 
             database.awaitQuery(`UPDATE stats
             SET global = ?, country = ?, pp = ?, accuracy = ?, playcount = ?, playtime = ?, score = ?, hits = ?, level = ?, progress = ?
-            WHERE user = ${id} AND mode = ${mode} AND time = ${rank.time}`, [
+            WHERE user = ${id} AND mode = ${m} AND time = ${rank.time}`, [
                 stat.global_rank, stat.country_rank, Math.floor(stat.pp),
                 stat.hit_accuracy, stat.play_count, stat.play_time, stat.ranked_score,
                 stat.total_hits, stat.level.current, stat.level.progress
