@@ -19,7 +19,7 @@ export default async function(){
                 if(payload.length == 50 || i == users.length - 1){
                     logger.send(`Payloads left: ${Math.floor((users.length - i) / 50 + 1)}/${Math.floor(users.length / 50)}`)
                     await getUser(payload)
-                    sleep(5000)
+                    await sleep(5000)
                     payload.length = 0;
                 }
             }
