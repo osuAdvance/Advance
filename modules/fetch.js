@@ -131,7 +131,7 @@ function getScores(id, mode){
 
                 if(check && check?.pp == score.pp) continue; //TODO: add aditional checks if peppy decides to fuck pp again
 
-                if(check && check?.pp != score.pp){
+                if(check && check?.pp != score.pp && score.pp != null){
                     database.awaitQuery(`UPDATE scores SET pp = ${score.pp}
                     WHERE user = ${id} AND scoreid = ${score.id} AND time = ${await getTime(score.created_at)}`)
                     continue;
