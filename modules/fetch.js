@@ -55,9 +55,9 @@ function getInfo(user, id){
             database.awaitQuery(`UPDATE users SET username = ?, username_safe = ?, country = ?
             WHERE userid = ?`, [
                 user.username,
-                user.username_safe.toLowerCase().replaceAll(" ", "_"),
+                user.username.toLowerCase().replaceAll(" ", "_"),
                 user.country_code,
-                id[i]
+                id
             ])
         }
         return resolve()
@@ -114,6 +114,7 @@ function getStats(id, stats){
 function getScores(id, mode){
     return new Promise(async (resolve, reject) => {
         const currentTime = await getTime()
+        const scoreCache = []
         for(const type of ["best", "recent"]){
             const scores = await get(`https://osu.ppy.sh/api/v2/users/${id}/scores/${type}?mode=${mode}&include_fails=1&limit=100`)
             //! Remove when capacity reaches limit
@@ -122,6 +123,8 @@ function getScores(id, mode){
 
             for(var i = 0; i < scores.length; i++){
                 const score = scores[i]
+                if(scoreCache.indexOf(score.id) != -1) continue;
+                scoreCache.push(score.id)
                 const check = (await database.awaitQuery(`SELECT * FROM scores
                 WHERE user = ${id} AND scoreid = ${score.id} AND time = ${await getTime(score.created_at)}`))[0]
                 //TODO: shorten this
