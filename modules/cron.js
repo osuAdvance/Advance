@@ -1,6 +1,7 @@
 import database from "../helper/database.js";
 import getUser from "./fetch.js";
 import Logger from "cutesy.js"
+import { sleep } from "../helper/system.js";
 
 const logger = new Logger().addTimestamp("hh:mm:ss").changeTag("Cron").purple()
 
@@ -18,6 +19,7 @@ export default async function(){
                 if(payload.length == 50 || i == users.length - 1){
                     logger.send(`Payloads left: ${Math.floor((users.length - i) / 50 + 1)}/${Math.floor(users.length / 50)}`)
                     await getUser(payload)
+                    sleep(5000)
                     payload.length = 0;
                 }
             }
