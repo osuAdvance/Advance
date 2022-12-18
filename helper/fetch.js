@@ -89,7 +89,7 @@ function generate(){
 
 export default function get(url) {
     return new Promise(async (resolve, reject) => {
-        const key = await login(400).catch(e => reject(e))
+        const key = await login(400, true).catch(e => reject(e))
         try {
             const request = await fetch(url, {
                 headers: {
