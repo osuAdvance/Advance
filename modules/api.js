@@ -1,5 +1,6 @@
 import { fastify as f } from "fastify"
 import { getUsername } from "./fetch.js";
+import { port } from "../config.js"
 
 export default async function(){
     const fastify = f();
@@ -13,5 +14,5 @@ export default async function(){
         }
     })
     
-    fastify.listen({ port: 2451 })
+    fastify.listen({ port: port })
 }
