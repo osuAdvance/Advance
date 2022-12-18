@@ -24,6 +24,13 @@ export default async function(){
                 }
             }
 
+            const duplicated = await database.awaitQuery(`SELECT id FROM scores GROUP BY scoreid HAVING count(scoreid) > 1`) //TODO: Find fix for this
+
+            for(let i = 0; i < duplicated.length; i++){
+                await database.awaitQuery(`DELETE FROM scores WHERE id = ${duplicated[i].id}`)
+            }
+
+            logger.send(`Deleting ${duplicated.length} duplicated scores.`)
             logger.send("Finished update.")
 
             return resolve()
