@@ -7,5 +7,5 @@ export default async function(fastify, opts) {
 
     fastify.get('/register/:username', track)
     fastify.get('/track/:username', track)
-    fastify.get('/user/:username', profile)
+    fastify.get('/users/:username', profile)
 }
