@@ -16,7 +16,7 @@ import { sleep } from "../helper/system.js";
             for(let i = 0; i < users.length; i++){
                 payload.push(users[i].userid)
                 if(payload.length == 50 || i == users.length - 1){
-                    logger.send(`Payloads left: ${Math.floor((users.length - i) / 50 + 1)}/${Math.floor(users.length / 50)}`)
+                    logger.send(`Payloads left: ${Math.floor((users.length - i) / 50 + 1)}/${Math.floor(users.length / 50) + 1}`)
                     await getUser(payload)
                     await sleep(5000)
                     payload.length = 0;
