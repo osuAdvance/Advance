@@ -1,19 +1,15 @@
-export const username = "BanchoUsername"
-export const password = "BanchoPassword"
 export const database = {
     host: "localhost",
-    user: "Advance",
-    password: "Advance",
+    user: "advance",
+    password: "advance",
     database: "advance"
 }
 
-export const port = 3000
-export const debug = false
+//Crawler
+export const username = "BanchoUsername"
+export const password = "BanchoPassword"
+export const includeFailed = true
 
-export default {
-    username,
-    password,
-    database,
-    port,
-    debug
-}
+//API
+export const host = "127.0.0.1" //use 0.0.0.0 as alternative
+export const port = 2345

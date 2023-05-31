@@ -1,111 +1,78 @@
-import fetch from "node-fetch"
-import { username, password } from "../config.js"
-import global from "./global.js"
-import { sleep, getTime } from "./system.js"
+import database from "./database.js";
+import osu from "./auth.js"
+import { getTime, getSafename } from "./system.js";
+import getInfo from "./fetch/info.js"
+import getScores from "./fetch/scores.js"
+import getStats from "./fetch/stats.js"
 
-function login(limit = 1000, wait = false){ //* Promise based v2 Login with 200 Requests default threshhold
-    return new Promise(async (resolve, reject) => {
-        let time = await getTime()
-        global.attemps++
+export function getUser(id, first = false){ //2-5 Requests -> 100-250 (50)
+    return new Promise(async (resolve) => {
+        if(typeof(id) != "object") return resolve({ error: "ID need to be in an array." })
 
-        let c = global.cache[0] //Creates a copy of global.cache
+        id.sort((a, b) => a - b)
 
-        if(!c) return resolve(await generate())
+        let users;
 
-        if(c.expires_in < time){
-            global.attemps = 0
-            return resolve(await generate())
+        try {
+            const request = await osu.GET(`https://osu.ppy.sh/api/v2/users?ids[]=${id.join("&ids[]=")}`)
+            users = request.users
+        } catch (e) {
+            return resolve({ error: e })
         }
 
-        if(c.reset > time){
-            if(c.count >= limit){
-                if(!wait) return reject(`Time left: ${c.reset + 1 - time} Seconds`)
+        if(users.length < 1 && id.length == 1) return resolve({ error: "User not found" })
+        
+        let pos = 0;
 
-                let limited = global.limited //Copy of global.limited
-                if(global.limited == false) global.limited = true;
-
-                await sleep((c.reset + 1 - time) * 1000) //Wait until a slot is free
-
-                resolve(limited ? global.cache[0].access_token : await generate()) //If wasn't limited already, generate new token.
-
-                global.limited = false;
-                return;
+        for(let i = 0; i < id.length; i++){
+            const user = users[pos]
+            if(user?.id != id[i]){
+                database.awaitQuery(`UPDATE users SET available = 0 WHERE userid = ${id[i]}`)
+                continue;
             }
 
-            c.count++
-        } else {
-            c.reset = time + 60
-            c.count = 0
-        }
+            pos++
 
-        global.cache[0] = c
-        return resolve(c.access_token)
+            getInfo(user, user.id)
+            
+            let modes = await getStats(user.id, user.statistics_rulesets)
+            modes = first ? ["osu", "taiko", "fruits", "mania"] : modes
+
+            for(let j = 0; j < modes.length; j++){
+                getScores(user.id, modes[j])
+            }
+        }
+        return resolve()
     })
 }
+export function getUsername(username){
+    return new Promise(async (resolve) => {
+        const user = await osu.GET(`https://osu.ppy.sh/api/v2/users/${username}/osu?key=username`)
+        const safename = getSafename(user.username)
+        if(user.error === null) return resolve({ error: "User not found" }) //? Idk about this one || resolve null
 
-function generate(){
-    return new Promise(async (resolve, reject) => {
-        const time = await getTime()
-        const headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        };
-    
-        const body = {
-            "username": username,
-            "password": password,
-            "client_id": 5,
-            "client_secret": "FGc9GAtyHzeQDshWP5Ah7dega8hJACAJpQtw6OXk",
-            "grant_type": "password",
-            "scope": "*"
-        }
-        
-        let token;
+        const check = (await database.awaitQuery(`SELECT * FROM users WHERE username_safe = ?`, [
+            safename
+        ]))[0]
 
-        try {
-            const response = await fetch("https://osu.ppy.sh/oauth/token", {
-                method: "POST",
-                headers,
-                body: JSON.stringify(body),
-            })
-        
-            token = await response.json()
-    
-            if(token.error) return reject(token.hint)
-    
-        } catch (e){
-            return reject("Couldn't connect to osu! (Authentication)")
-        }
+        if(check) return resolve({ error: "User is already in database"})
 
-
-        token.count = 1
-        token.reset = time + 60
-        token.expires_in = time + token.expires_in
-    
-        global.cache[0] = token
-        return resolve(token.access_token)
-    })
-}
-
-export default function get(url) {
-    return new Promise(async (resolve, reject) => {
-        const key = await login(400, true).catch(e => reject(e))
-        try {
-            const request = await fetch(url, {
-                headers: {
-                    "authorization": "Bearer " + key,
-                    "scope": "*",
-                    "user-agent": "osu-lazer"
-                },
-            })
-    
-            const data = await request.json()
-
-            if(data.authentication == "basic") return reject("Invalid Authentication (Ratelimit)")
-    
-            return resolve(data)
-        } catch(e){
-            return reject("Couldn't connect to osu!")
-        }
+        await database.awaitQuery(`INSERT INTO users
+            (userid, username, username_safe, country, added)
+            VALUES (?, ?, ?, ?, ?)`, [
+                user.id, user.username, safename,
+                user.country_code, getTime()
+        ])
+        await getUser([user.id], true)
+        return resolve({
+            message: "User got added into the system, scores are now tracked every hour",
+            user : {
+                id: user.id,
+                username: user.username,
+                safename: safename,
+                country: user.country_code,
+                time: getTime()
+            }
+        });
     })
 }

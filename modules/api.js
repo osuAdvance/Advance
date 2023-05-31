@@ -1,18 +1,18 @@
 import { fastify as f } from "fastify"
-import { getUsername } from "./fetch.js";
-import { port } from "../config.js"
+import { port, host } from "../config.js"
+import api from "../api/routes.js"
 
-export default async function(){
-    const fastify = f();
+const fastify = f({ logger: false })
 
-    fastify.get('/:username/create', async (req, reply) => {
-        try {
-            const result = await getUsername(req.params.username)
-            return reply.send(result)
-        } catch (e) {
-            return reply.send({ error: e })
-        }
+async function run(){
+    fastify.addHook('onResponse', async (req, reply) => {
+        const time = parseFloat(reply.getResponseTime().toFixed(2))
+        log.send(`${req.ips[req.ips.length - 1]} -> ${req.url} (${reply.statusCode}) - ${time}ms`)
     })
-    
-    fastify.listen({ port: port })
+
+    fastify.register(api, { prefix: '/api' })
+
+    await fastify.listen({ port, host })
 }
+
+run()

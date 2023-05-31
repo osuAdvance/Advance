@@ -1,6 +1,6 @@
 {
   "name": "advance",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "a bancho data collector to create an stats api for everyone to use",
   "main": "index.js",
   "type": "module",
@@ -19,9 +19,9 @@
   },
   "homepage": "https://github.com/osuAdvance/advance#readme",
   "dependencies": {
-    "cutesy.js": "^1.2.2",
-    "fastify": "^4.10.2",
+    "cutesy.js": "^1.2.3",
+    "fastify": "^4.17.0",
     "mysql-await": "^2.2.3",
-    "node-fetch": "^3.3.0"
+    "node-fetch": "^3.3.1"
   }
 }

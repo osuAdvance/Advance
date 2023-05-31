@@ -32,7 +32,7 @@ export const mods = {
     "Mirror" : 1073741824
 }
 
-export async function convertToNumber(m){
+export function convertToNumber(m){
     let num = 0;
 
     for(var i = 0; i < m.length; i++){
@@ -54,4 +54,14 @@ export async function convertToString(mods){
     }
 
     return await getScoreMods(mods)
+}
+
+export const status = {
+    graveyard: -2,
+    wip: -1,
+    pending: 0,
+    ranked: 1,
+    approved: 2,
+    qualified: 3,
+    loved: 4
 }
