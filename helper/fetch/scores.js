@@ -10,7 +10,14 @@ export default function (id, mode){
             osu.GET(`https://osu.ppy.sh/api/v2/users/${id}/scores/best?mode=${mode}&include_fails=${+includeFailed}&limit=100`),
             osu.GET(`https://osu.ppy.sh/api/v2/users/${id}/scores/recent?mode=${mode}&include_fails=${+includeFailed}&limit=100`)
         ])
-        const allScores = [...bestScores, ...recentScores]
+        let allScores = []
+        try {
+            allScores = [...bestScores, ...recentScores]
+        } catch (e) {
+            console.log(bestScores)
+            console.log(recentScores)
+            process.exit(1)
+        }
 
         for(let i = 0; i < allScores.length; i++) {
             const score = allScores[i]
