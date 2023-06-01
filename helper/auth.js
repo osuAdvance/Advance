@@ -1,5 +1,6 @@
 import fetch from "node-fetch"
 import { username, password } from "../config.js"
+import { sleep } from "./system.js";
 
 let token = "";
 let count = 0;
@@ -42,6 +43,11 @@ function generate(){
                 headers,
                 body: JSON.stringify(body),
             })
+
+            if(response.status == 429){
+                await sleep(1000 * 60 * 60)
+                return resolve(await generate())
+            }
         
             t = await response.json()
         } catch (e){
