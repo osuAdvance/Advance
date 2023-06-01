@@ -31,7 +31,7 @@ export default function (id, stats) {
 
             if(rank.playcount == stat.play_count) continue;
 
-            database.awaitQuery(`UPDATE stats
+            await database.awaitQuery(`UPDATE stats
             SET global = ?, country = ?, pp = ?, accuracy = ?, playcount = ?, playtime = ?, score = ?, hits = ?, level = ?, progress = ?
             WHERE user = ${id} AND mode = ${m} AND time = ${rank.time}`, [
                 stat.global_rank, stat.country_rank, Math.floor(stat.pp),

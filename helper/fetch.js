@@ -39,8 +39,7 @@ export function getUser(id, first = false){ //2-5 Requests -> 100-250 (50)
             modes = first ? ["osu", "taiko", "fruits", "mania"] : modes
 
             for(let j = 0; j < modes.length; j++){
-                getScores(user.id, modes[j])
-                await sleep(250)
+                await getScores(user.id, modes[j])
             }
         }
         return resolve()
