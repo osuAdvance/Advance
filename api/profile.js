@@ -6,7 +6,8 @@ export default async function (req, reply) {
     if(!username) return reply.send({ error: "Invalid username" })
     let user = (await database.awaitQuery(`SELECT * FROM users WHERE username_safe = "${getSafename(username)}"`))[0]
     if(!user) return reply.send({ error: "User not in the system" })
-    const scores = await database.awaitQuery(`SELECT * FROM scores WHERE user = ${user.userid}`)
+    const scores = await database.awaitQuery(`SELECT * FROM scores WHERE user = ${user.userid} AND time >= 1672527600`)
+    if(scores.length < 1) return reply.send(user)
     let ids = [];
 
     const recent = scores.sort((a, b) => a.time > b.time ? -1 : 1)
@@ -17,8 +18,18 @@ export default async function (req, reply) {
         if(ids.indexOf(score.beatmap) == -1) ids.push(score.beatmap)
     }
 
-    let request = await fetch(`https://catboy.best/api/v2/beatmaps?ids=${ids.join("&ids=")}`)
-    const beatmaps = await request.json()
+    const chunkSize = 100
+    const beatmaps = []
+
+    let request;
+
+    for(let i = 0; i < ids.length; i += chunkSize){
+        const chunk = ids.slice(i, i + chunkSize);
+        request = await fetch(`https://catboy.best/api/v2/beatmaps?ids=${chunk.join("&ids=")}`)
+        const result = await request.json()
+        beatmaps.push(...result)
+    }
+
 
     ids = []
 
@@ -29,9 +40,14 @@ export default async function (req, reply) {
 
     let artists = {}
     let beatmapsets = {}
+    const sets = []
 
-    request = await fetch(`https://catboy.best/api/v2/beatmapsets?ids=${ids.join("&ids=")}`)
-    const sets = await request.json()
+    for(let i = 0; i < ids.length; i += chunkSize){
+        const chunk = ids.slice(i, i + chunkSize);
+        request = await fetch(`https://catboy.best/api/v2/beatmapsets?ids=${chunk.join("&ids=")}`)
+        const result = await request.json()
+        sets.push(...result)
+    }
 
     for(let i = 0; i < sets.length; i++){
         const set = sets[i]
