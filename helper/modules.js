@@ -21,15 +21,19 @@ function start(space, file){
     })
 }
 
-async function restart(space, file){
-    list[space] = fork(file)
-
-    list[space].on('message', (msg) => {
-        console.log(msg);
-    });
-
-    list[space].on("close", () => {
-        restart(space, list[space].spawnargs[1])
+function restart(space, file){
+    return new Promise((resolve) => {
+        const Space = space.charAt(0).toUpperCase() + space.slice(1)
+        list[space] = fork(file)
+        logger.green(`Starting ${Space}`).send()
+    
+        list[space].on("spawn", resolve)
+    
+        list[space].on("close", async () => {
+            logger.red(`Stopping ${Space}`).send()
+            delete list[space]
+            await restart(space, file)
+        })
     })
 }
 

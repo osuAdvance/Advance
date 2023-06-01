@@ -6,6 +6,6 @@ import modules from "./helper/modules.js";
 
     logger.send("Starting API")
 
-    await modules.start("api", "./modules/api.js")
+    await modules.restart("api", "./modules/api.js")
     await modules.start("fetch", "./modules/fetch.js")
 })();
