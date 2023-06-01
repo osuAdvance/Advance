@@ -40,8 +40,8 @@ export function getUser(id, first = false){ //2-5 Requests -> 100-250 (50)
 
             for(let j = 0; j < modes.length; j++){
                 getScores(user.id, modes[j])
+                await sleep(250)
             }
-            await sleep(150)
         }
         return resolve()
     })
