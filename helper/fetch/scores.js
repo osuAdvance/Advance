@@ -2,22 +2,21 @@ import { includeFailed } from "../../config.js";
 import { convertToNumber } from "../mods.js";
 import database from "../database.js"
 import osu from "../auth.js"
-import { getTime } from "../system.js";
-export default function (id, mode){
+import { getTime, sleep } from "../system.js";
+export default function getScores (id, mode){
     return new Promise(async (resolve) => {
         const scoreCache = []
         const [ bestScores, recentScores ] = await Promise.all([
             osu.GET(`https://osu.ppy.sh/api/v2/users/${id}/scores/best?mode=${mode}&include_fails=${+includeFailed}&limit=100`),
             osu.GET(`https://osu.ppy.sh/api/v2/users/${id}/scores/recent?mode=${mode}&include_fails=${+includeFailed}&limit=100`)
         ])
-        let allScores = []
-        try {
-            allScores = [...bestScores, ...recentScores]
-        } catch (e) {
-            console.log(bestScores)
-            console.log(recentScores)
-            process.exit(1)
+
+        if(bestScores.error == "Too Many Attempts." || recentScores.error == "Too Many Attempts."){
+            await sleep(60000)
+            return resolve(await getScores(id, mode))
         }
+
+        const allScores = [...bestScores, ...recentScores]
 
         for(let i = 0; i < allScores.length; i++) {
             const score = allScores[i]
