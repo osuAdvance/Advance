@@ -5,6 +5,7 @@ import osu from "../auth.js"
 import { getTime, sleep } from "../system.js";
 export default function getScores (id, mode){
     return new Promise(async (resolve) => {
+        const currentTime = getTime()
         const scoreCache = []
         const [ bestScores, recentScores ] = await Promise.all([
             osu.GET(`https://osu.ppy.sh/api/v2/users/${id}/scores/best?mode=${mode}&include_fails=${+includeFailed}&limit=100`),
@@ -43,14 +44,14 @@ export default function getScores (id, mode){
                 score.statistics.count_50, score.statistics.count_100, score.statistics.count_300,
                 score.statistics.count_miss, score.statistics.count_katu, score.statistics.count_geki,
                 +score.perfect, convertToNumber(score.mods) || 0, scoreTime,
-                score.rank, score.pp || 0, score.mode_int, 0, getTime()
+                score.rank, score.pp || 0, score.mode_int, 0, currentTime
             ])
 
             const beatmap = (await database.awaitQuery(`SELECT * FROM beatmaps WHERE beatmapid = ${score.beatmap.id}`))[0]
 
             if(!beatmap){
-                await database.awaitQuery(`INSERT INTO beatmaps (beatmapid, beatmapsetid, title, artist, creator, creatorid, version, added, last_update)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                await database.awaitQuery(`INSERT INTO beatmaps (beatmapid, beatmapsetid, title, artist, creator, creatorid, version, length, ranked, added, last_update)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                     score.beatmap.id,
                     score.beatmapset.id,
                     score.beatmapset.title,
@@ -58,6 +59,8 @@ export default function getScores (id, mode){
                     score.beatmapset.creator,
                     score.beatmapset.user_id,
                     score.beatmap.version,
+                    score.beatmap.hit_length,
+                    score.beatmap.ranked,
                     currentTime,
                     currentTime
                 ])

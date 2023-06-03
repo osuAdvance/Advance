@@ -1,6 +1,6 @@
 import database from "./database.js";
 import osu from "./auth.js"
-import { getTime, getSafename, sleep } from "./system.js";
+import { getTime, getSafename } from "./system.js";
 import getInfo from "./fetch/info.js"
 import getScores from "./fetch/scores.js"
 import getStats from "./fetch/stats.js"
