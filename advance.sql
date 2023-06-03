@@ -19,7 +19,7 @@ CREATE TABLE `beatmaps` (
   `added` int(32) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `beatmapSearch` (`beatmapid`,`beatmapsetid`,`creatorid`,`creator`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;;
 
 
 CREATE TABLE `beatmapsets` (
@@ -32,7 +32,7 @@ CREATE TABLE `beatmapsets` (
   `last_update` int(32) NOT NULL,
   `added` int(32) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;;
 
 
 CREATE TABLE `scores` (
@@ -59,7 +59,7 @@ CREATE TABLE `scores` (
   `added` int(32) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `scoreSearch` (`user`,`beatmap`,`scoreid`,`mods`,`time`,`rank`,`pp`,`mode`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;;
 
 
 CREATE TABLE `stats` (
@@ -79,7 +79,7 @@ CREATE TABLE `stats` (
   `time` int(32) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `statsSearch` (`user`,`global`,`pp`,`playcount`,`playtime`,`mode`,`time`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;;
 
 
 CREATE TABLE `users` (
@@ -91,7 +91,7 @@ CREATE TABLE `users` (
   `added` varchar(255) NOT NULL,
   `available` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;;
 
 
 -- 2023-06-02 14:43:23
