@@ -45,6 +45,38 @@ export default function getScores (id, mode){
                 +score.perfect, convertToNumber(score.mods) || 0, scoreTime,
                 score.rank, score.pp || 0, score.mode_int, 0, getTime()
             ])
+
+            const beatmap = (await database.awaitQuery(`SELECT * FROM beatmaps WHERE beatmapid = ${score.beatmap.id}`))[0]
+
+            if(!beatmap){
+                await database.awaitQuery(`INSERT INTO beatmaps (beatmapid, beatmapsetid, title, artist, creator, creatorid, version, added, last_update)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                    score.beatmap.id,
+                    score.beatmapset.id,
+                    score.beatmapset.title,
+                    score.beatmapset.artist,
+                    score.beatmapset.creator,
+                    score.beatmapset.user_id,
+                    score.beatmap.version,
+                    currentTime,
+                    currentTime
+                ])
+            }
+
+            const set = (await database.awaitQuery(`SELECT * FROM beatmapsets WHERE setid = ${score.beatmapset.id}`))[0]
+
+            if(!set){
+                await database.awaitQuery(`INSERT INTO beatmapsets (setid, title, artist, creator, creatorid, added, last_update)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`, [
+                    score.beatmapset.id,
+                    score.beatmapset.title,
+                    score.beatmapset.artist,
+                    score.beatmapset.creator,
+                    score.beatmapset.user_id,
+                    currentTime,
+                    currentTime
+                ])
+            }
         }
         resolve()
     })

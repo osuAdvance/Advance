@@ -1,7 +1,6 @@
 import database from "../helper/database.js";
 import { getUser } from "../helper/fetch.js";
 import Logger from "cutesy.js"
-import { sleep } from "../helper/system.js";
 
 (async () => {
     const logger = new Logger().addTimestamp("hh:mm:ss").changeTag("Fetch").purple()
