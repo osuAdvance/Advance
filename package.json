@@ -1,23 +1,15 @@
 {
-  "name": "advance",
-  "version": "3.0.0",
-  "description": "a bancho data collector to create an stats api for everyone to use",
+  "name": "new-advance",
+  "version": "1.0.0",
+  "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/osuAdvance/advance.git"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/osuAdvance/advance/issues"
-  },
-  "homepage": "https://github.com/osuAdvance/advance#readme",
   "dependencies": {
     "cutesy.js": "^1.2.3",
     "fastify": "^4.17.0",

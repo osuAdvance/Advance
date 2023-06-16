@@ -4,7 +4,7 @@ import api from "../api/routes.js"
 import Logger from "cutesy.js"
 const log = new Logger().changeTag("API").purpleBlue()
 
-const fastify = f({ logger: false })
+const fastify = f({ logger: false, trustProxy: true })
 
 async function run(){
     fastify.addHook('onResponse', async (req, reply) => {

@@ -43,14 +43,18 @@ export function convertToNumber(m){
 }
 
 export async function convertToString(mods){
-    var modsString = ["NF", "EZ", "NV", "HD", "HR", "SD", "DT", "RX", "HT", "NC", "FL", "AU", "SO", "AP", "PF", "K4", "K5", "K6", "K7", "K8", "K9", "RN", "LM", "K9", "K0", "K1", "K3", "K2"];
+    var modsString = [
+        "NoFail", "Easy", "NoVideo", "Hidden", "HardRock", "SuddenDeath",
+        "DoubleTime", "Relax", "HalfTime", "Nightcore", "Flashlight", "Autoplay", "SpinOut", "AutoPilot", "Perfect",
+        "K4", "K5", "K6", "K7", "K8", "K9", "RN", "LastMod", "K9", "K0", "K1", "K3", "K2", "ScoreV2", "Mirror"
+    ];
         
     async function getScoreMods(e, t) {
         var n = [];
         return 512 == (512 & e) && (e &= -65), 16384 == (16384 & e) && (e &= -33), modsString.forEach(function(t, i) {
             var o = 1 << i;
         (e & o) > 0 && n.push(t)
-        }), n.length > 0 ? (t ? " " : " +") + n.join("") : t ? "None" : ""
+        }), n.length > 0 ? (t ? "" : "") + n.join("") : t ? "NoMod" : ""
     }
 
     return await getScoreMods(mods)
