@@ -24,7 +24,7 @@ export async function getUser(id, discord){
         ])
     } else {
         if(check.username != user.username || check.country != user.country_code || check.restricted != +user.is_restricted){
-            database.awaitQuery(`UPDATE users SET username = ?, username_safe = ?, country = ?, restricted = ?, WHERE userid = ?`, [
+            database.awaitQuery(`UPDATE users SET username = ?, username_safe = ?, country = ?, restricted = ? WHERE userid = ?`, [
                 user.username,
                 user.username.toLowerCase().replaceAll(" ", "_"),
                 user.country_code,
