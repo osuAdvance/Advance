@@ -15,7 +15,13 @@ export default async function (req, reply) {
         database.awaitQuery(`SELECT * FROM stats WHERE user = ${user.userid} AND time >= 1672527600 AND mode = ${mode} ORDER BY time DESC`)
     ])
 
-    user.rank = stats[0]?.global || 0
+    const peaks = new Array(...stats).sort((a, b) => a.global < b.global ? -1 : 1)
+
+    user.rank = {
+        start: stats[stats.length - 1]?.global || 0,
+        current: stats[0]?.global || 0,
+        peak: peaks[0]?.global || 0
+    }
     user.level = stats[0]?.level || 0
     user.progress = stats[0]?.progress || 0
 
@@ -27,12 +33,12 @@ export default async function (req, reply) {
     const best = new Array(...scores).sort((a, b) => a.pp > b.pp ? -1 : 1)
     const passed = recent.filter(s => s.passed == 1)
 
-    const [ { arts, bsets, ids }, fav ] = await Promise.all([
+    const [ { arts, bsets }, fav ] = await Promise.all([
         favStats(scores),
         favMod(scores)
     ])
 
-    const tags = await genTags({ scores, passed, arts, bsets })
+    const tags = await genTags({ scores, passed, arts, rank: user.rank, bsets })
 
     user.pp = {
         ranked: (stats[0]?.pp || 0) - (stats[stats.length - 1]?.pp || 0),
@@ -49,8 +55,7 @@ export default async function (req, reply) {
     user.favourite = {
         mod: fav,
         mapper: arts,
-        songs: bsets,
-        sets: ids
+        songs: bsets
     }
 
     user.scores = {

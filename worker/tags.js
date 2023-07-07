@@ -1,12 +1,16 @@
-export default async function({ scores, passed, arts, bsets }){
-    const tags = []
+export default async function({ scores, passed, arts, rank, bsets }){
+    const tags = [];
 
-    if(scores.length <= 100){
-        tags.push("Newbie")
-    }
+    (() => {
+        if(rank.peak == 1) return tags.push({ name: "Champion", type: 1 })
+        if(rank.peak <= 100) return tags.push({ name: "Challenger", type: 1 })
+        if(rank.peak <= 1000) return tags.push({ name: "Contester", type: 1 })
+        if(rank.current <= 100000) return tags.push({ name: "Casual", type: 2 })
+        if(rank.current >= 1000000) return tags.push({ name: "Newbie", type: 1 })
+    })();
 
-    if(passed.length / scores.length <= 0.4) tags.push("Retry & Quit")
-    if(passed.length / scores.length >= 0.7) tags.push("Play & Pray")
+    if(passed.length / scores.length <= 0.4) tags.push({ name: "Retry & Quit", type: 3 })
+    if(passed.length / scores.length >= 0.7) tags.push({ name: "Play & Pray", type: 1 })
 
     let grades = {
         XH: 0,
@@ -31,9 +35,9 @@ export default async function({ scores, passed, arts, bsets }){
     const accuracy = accSum / passed.length;
 
     (() => {
-        if(accuracy == 100) return tags.push("God Accuarcy")
-        if(accuracy >= 99) return tags.push("Good Accuracy")
-        if(accuracy <= 90) return tags.push("Accuracy issue")
+        if(accuracy == 100) return tags.push({ name: "God Accuarcy", type: 1 })
+        if(accuracy >= 99) return tags.push({ name: "Good Accuracy", type: 1 })
+        if(accuracy <= 90) return tags.push({ name: "Accuracy issue", type: 3 })
     })();
 
 
@@ -46,16 +50,18 @@ export default async function({ scores, passed, arts, bsets }){
     const bestGrades = Grades.sort((a, b) => a[1] > b[1] ? -1 : 1);
 
     (() => {
-        if(bestGrades[0][1] / passed.length >= 0.7) return tags.push(`Nothing but ${bestGrades[0][0]}`)
-        if(bestGrades[0][1] / passed.length >= 0.3) return tags.push(`${bestGrades[0][0]} Expert`)
+        if(bestGrades[0][1] / passed.length >= 0.7) return tags.push({ name: `Nothing but ${bestGrades[0][0]}`, type: 1 })
+        if(bestGrades[0][1] / passed.length >= 0.3) return tags.push({ name: `${bestGrades[0][0]} Expert`, type: 2 })
     })();
 
     (() => {
         for(let i = 0; i < arts.length; i++){
-            if(arts[i][1] / scores.length >= 0.07) return tags.push(`${arts[0][0]} One-Trick`)
-            if(arts[i][1] / scores.length >= 0.03) return tags.push(`${arts[0][0]} Enjoyer`)
+            if(arts[i].count / scores.length >= 0.07) return tags.push({ name: `${arts[i].name} One-Trick`, type: 2 })
+            if(arts[i].count / scores.length >= 0.03) return tags.push({ name: `${arts[i].name} Enjoyer`, type: 2 })
         }
     })()
+
+    tags.sort((a, b) => a.type - b.type)
 
     return {
         tags,
