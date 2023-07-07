@@ -40,6 +40,6 @@ export default async function(req, reply){
         added: time
     }})
 
-    await migrate({params : { username: user.username }}, {send: (() => {})})
+    await migrate({params : { username: user.id }}, {send: (() => {})})
     return reply;
 }

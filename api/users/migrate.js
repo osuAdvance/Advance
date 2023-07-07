@@ -5,7 +5,7 @@ export default async function(req, reply){
 
     if(!username) return reply.send({ message: "Nothing to migrate" })
 
-    const userCheck = await database.awaitQuery(`SELECT * FROM users WHERE username_safe = "${getSafename(username)}" OR discord = "${username}"`)
+    const userCheck = await database.awaitQuery(`SELECT * FROM users WHERE username_safe = "${getSafename(username)}" OR discord = "${username}" OR userid = ${username}`)
     if(!userCheck[0]) return reply.send({ message: "Nothing to migrate" })
     if(userCheck[0].added < 1685570400) return reply.send({ message: "You already have been migrated!" })
     const oldUser = await database.awaitQuery(`SELECT * FROM advance.users WHERE userid = ${userCheck[0].userid}`)
