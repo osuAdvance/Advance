@@ -7,5 +7,5 @@ import modules from "./helper/modules.js";
     logger.send("Starting API")
 
     await modules.restart("api", "./modules/api.js")
-    await modules.start("fetch", "./modules/cron.js")
+    await modules.restart("fetch", "./modules/cron.js")
 })();
