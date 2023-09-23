@@ -100,8 +100,18 @@ async function getScores(id, mode){
         await sleep(60000)
         return resolve(await getScores(id, mode))
     }
-    
-    const allScores = [...bestScores, ...recentScores]
+    let allScores = []
+    try {
+        allScores = [...bestScores, ...recentScores]
+    } catch {
+        console.error(typeof(bestScores), typeof(recentScores))
+        console.error(bestScores?.error, recentScores?.error)
+        console.error(bestScores, recentScores)
+    }
+
+    if(allScores.length < 1) return;
+    const databaseCache = await database.awaitQuery(`SELECT scoreid, pp, time FROM scores WHERE user = ${id} AND mode = ${allScores[0].mode_int}`)
+    const values = []
     
     for(let i = 0; i < allScores.length; i++) {
         const score = allScores[i]
@@ -110,26 +120,21 @@ async function getScores(id, mode){
     
         const scoreTime = getTime(score.created_at)
     
-        const check = (await database.awaitQuery(
-            `SELECT pp FROM scores WHERE user = ${id} AND scoreid = ${score.id} AND time = ${scoreTime}`
-        ))[0]
+        const check = databaseCache.filter(s => s.scoreid == score.id || (s.user == id && s.pp == score.pp && s.time == scoreTime))?.[0]
     
         if(check){
             if(check.pp == score.pp || score.pp == null) continue;
             database.awaitQuery(`UPDATE scores SET pp = ${score.pp} WHERE user = ${id} AND scoreid = ${score.id} AND time = ${scoreTime}`)
             continue;
         }
-    
-        database.awaitQuery(`INSERT INTO scores 
-        (user, beatmap, scoreid, score, accuracy, maxcombo, count50, count100, count300, countmiss, countkatu, countgeki, 
-        fc, mods, time, \`rank\`, passed, pp, mode, calculated, added)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+
+        values.push(
             score.user_id, score.beatmap.id, score.id, score.score, score.accuracy * 100, score.max_combo,
             score.statistics.count_50, score.statistics.count_100, score.statistics.count_300,
             score.statistics.count_miss, score.statistics.count_katu, score.statistics.count_geki,
             +score.perfect, convertToNumber(score.mods) || 0, scoreTime,
             score.rank, +score.passed, score.pp || 0, score.mode_int, 0, currentTime
-        ])
+        )
     
         const beatmap = (await database.awaitQuery(`SELECT * FROM beatmaps WHERE beatmapid = ${score.beatmap.id}`))[0]
     
@@ -165,4 +170,11 @@ async function getScores(id, mode){
             ])
         }
     }
+
+    if(values.length < 1) return;
+        
+    await database.awaitQuery(`INSERT INTO scores 
+    (user, beatmap, scoreid, score, accuracy, maxcombo, count50, count100, count300, countmiss, countkatu, countgeki, 
+    fc, mods, time, \`rank\`, passed, pp, mode, calculated, added)
+    VALUES ${"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?),".repeat(values.length / 21).slice(0, -1)}`, values)
 }
