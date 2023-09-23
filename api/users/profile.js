@@ -3,6 +3,7 @@ import { getSafename } from "../../helper/system.js"
 import favMod from "../../worker/favmod.js"
 import favStats from "../../worker/favstats.js"
 import genTags from "../../worker/tags.js"
+import userCache from "../../constants/cache.js"
 
 export default async function (req, reply) {
     const username = req.params?.username
@@ -10,10 +11,13 @@ export default async function (req, reply) {
     if(!username) return reply.send({ error: "Invalid username" })
     let user = (await database.awaitQuery(`SELECT * FROM users WHERE username_safe = "${getSafename(username)}" or discord = "${username}"`))[0]
     if(!user) return reply.send({ error: "User not in the system" })
-    const [ scores, stats ] = await Promise.all([
-        database.awaitQuery(`SELECT * FROM scores s JOIN beatmaps b ON s.beatmap = b.beatmapid WHERE s.user = ${user.userid} AND s.time >= 1672527600 AND mode = ${mode}`),
-        database.awaitQuery(`SELECT * FROM stats WHERE user = ${user.userid} AND time >= 1672527600 AND mode = ${mode} ORDER BY time DESC`)
-    ])
+    if(userCache[user.userid]?.[mode]) return userCache[user.userid][mode]
+    let scores = userCache[user.userid]?.scores || await database.awaitQuery(`SELECT * FROM scores s JOIN beatmaps b ON s.beatmap = b.beatmapid WHERE s.user = ${user.userid} AND s.time >= 1672527600 AND mode = ${mode}`)
+    let stats = userCache[user.userid]?.stats || await database.awaitQuery(`SELECT * FROM stats WHERE user = ${user.userid} AND time >= 1672527600 AND mode = ${mode} ORDER BY time DESC`)
+
+    if(!userCache[user.userid]) userCache[user.userid] = {}
+    userCache[user.userid].scores = scores
+    userCache[user.userid].stats = stats
 
     const peaks = new Array(...stats).sort((a, b) => a.global < b.global ? -1 : 1)
 
@@ -62,9 +66,9 @@ export default async function (req, reply) {
     user.scores = {
         total: scores.length,
         passed: passed.length,
-        best,
-        recent
     }
+
+    userCache[user.userid][mode] = user
 
     return user
 }

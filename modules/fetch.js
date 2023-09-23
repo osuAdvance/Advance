@@ -3,6 +3,7 @@ import { GET } from "../helper/auth.js"
 import { getSafename, getTime, sleep } from "../helper/system.js";
 import { includeFailed } from "../config.js";
 import { convertToNumber } from "../helper/mods.js";
+import userCache from "../constants/cache.js";
 export async function getUser(id, discord){
     const user = await GET("https://osu.ppy.sh/api/v2/me", id) //:)
 
@@ -177,4 +178,6 @@ async function getScores(id, mode){
     (user, beatmap, scoreid, score, accuracy, maxcombo, count50, count100, count300, countmiss, countkatu, countgeki, 
     fc, mods, time, \`rank\`, passed, pp, mode, calculated, added)
     VALUES ${"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?),".repeat(values.length / 21).slice(0, -1)}`, values)
+
+    delete userCache[id]
 }
