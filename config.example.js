@@ -10,6 +10,7 @@ export const clientID = "0"
 export const clientSecret = "somefunnycharacters"
 export const redirect = "https://advance.lemres.de/api/verify"
 export const includeFailed = true
+export const fetchRate = 60 //minutes between each fetch
 
 //API
 export const host = "127.0.0.1" //use 0.0.0.0 as alternative

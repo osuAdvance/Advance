@@ -1,3 +1,4 @@
+import { fetchRate } from "../config.js";
 import database from "../helper/database.js";
 import { getUser } from "./fetch.js";
 import Logger from "cutesy.js"
@@ -25,5 +26,5 @@ import Logger from "cutesy.js"
 
     setInterval(async () => {
         await update()
-    }, 1000 * 60 * 60) //! Increase Time if necessary
+    }, 1000 * 60 * fetchRate) //! Increase Time if necessary
 })();
