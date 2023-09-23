@@ -27,7 +27,16 @@ export async function GET(url, id, token){
             "Authorization": `Bearer ${key}`
         }
     })
-    return await request.json()
+
+    if(!request.ok){
+        if(request.status == 504) return { error: "Timeout" }
+    }
+
+    try {
+        return await request.json()
+    } catch (e) {
+        console.error(request)
+    }
 }
 
 async function auth(headers, body){
