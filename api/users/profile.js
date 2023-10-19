@@ -12,12 +12,13 @@ export default async function (req, reply) {
     let user = (await database.awaitQuery(`SELECT * FROM users WHERE username_safe = "${getSafename(username)}" or discord = "${username}"`))[0]
     if(!user) return reply.send({ error: "User not in the system" })
     if(userCache[user.userid]?.[mode]) return userCache[user.userid][mode]
-    let scores = userCache[user.userid]?.scores || await database.awaitQuery(`SELECT * FROM scores s JOIN beatmaps b ON s.beatmap = b.beatmapid WHERE s.user = ${user.userid} AND s.time >= 1672527600 AND mode = ${mode}`)
-    let stats = userCache[user.userid]?.stats || await database.awaitQuery(`SELECT * FROM stats WHERE user = ${user.userid} AND time >= 1672527600 AND mode = ${mode} ORDER BY time DESC`)
+    let scores = userCache[user.userid]?.[mode]?.scores || await database.awaitQuery(`SELECT * FROM scores s JOIN beatmaps b ON s.beatmap = b.beatmapid WHERE s.user = ${user.userid} AND s.time >= 1672527600 AND mode = ${mode}`)
+    let stats = userCache[user.userid]?.[mode]?.stats || await database.awaitQuery(`SELECT * FROM stats WHERE user = ${user.userid} AND time >= 1672527600 AND mode = ${mode} ORDER BY time DESC`)
 
     if(!userCache[user.userid]) userCache[user.userid] = {}
-    userCache[user.userid].scores = scores
-    userCache[user.userid].stats = stats
+    if(!userCache[user.userid][mode]) userCache[user.userid][mode] = {}
+    userCache[user.userid][mode].scores = scores
+    userCache[user.userid][mode].stats = stats
 
     const peaks = new Array(...stats).sort((a, b) => a.global < b.global ? -1 : 1)
 
@@ -63,9 +64,14 @@ export default async function (req, reply) {
         songs: bsets
     }
 
+    recent.length = 3
+    best.length = 3
+
     user.scores = {
         total: scores.length,
         passed: passed.length,
+        recent,
+        best
     }
 
     userCache[user.userid][mode] = user
