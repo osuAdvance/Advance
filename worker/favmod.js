@@ -13,10 +13,10 @@ export default async function (scores) {
         if(s.mods & 2) mods[1]++;
         if(s.mods & 8) mods[2]++;
         if(s.mods & 16) mods[3]++;
-        if(s.mods & 64 | 512) mods[4]++;
+        if(s.mods & 64) mods[4]++;
         //? Special Combos
 
-        if(s.mods & 64 | 512 && s.mods & 8){ //Hidden, DoubleTime
+        if(s.mods & 64 && s.mods & 8){ //Hidden, DoubleTime
             mods[2]--
             mods[4]--
             mods[6]++
