@@ -80,30 +80,34 @@ export default new class Auth extends EventEmitter {
             if(this.limited){
                 return this.once("ready", async () => resolve(await this.request(...arguments)))
             }
-            const request = await fetch(`https://osu.ppy.sh/api/v2${url}`, {
-                headers: {
-                    "Authorization": "Bearer " + (token || this.token),
-                    "scope": "*", //? Not sure if i need this
-                    "user-agent": "osu-lazer"
-                }
-            })
-    
-            if(!request.ok){
-                if(request.status == 401){
-                    await this.login()
-                    return resolve(await this.request(...arguments))
-                }
-                resolve(undefined);
-                return await this.limiter(request);
-            }
-
-            if(request.url.includes(".osz")) return resolve(request);
-    
             try {
-                return resolve(await request.json())
+                const request = await fetch(`https://osu.ppy.sh/api/v2${url}`, {
+                    headers: {
+                        "Authorization": "Bearer " + (token || this.token),
+                        "scope": "*", //? Not sure if i need this
+                        "user-agent": "osu-lazer"
+                    }
+                })
+
+                if(!request.ok){
+                    if(request.status == 401){
+                        await this.login()
+                        return resolve(await this.request(...arguments))
+                    }
+                    resolve(undefined);
+                    return await this.limiter(request);
+                }
+    
+                if(request.url.includes(".osz")) return resolve(request);
+        
+                try {
+                    return resolve(await request.json())
+                } catch {
+                    console.error(request)
+                    return resolve(undefined)
+                }
             } catch {
-                console.error(request)
-                return resolve(undefined)
+                return resolve(await this.request(...arguments))
             }
         })
     }
