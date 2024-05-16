@@ -65,7 +65,7 @@ export default new class Auth extends EventEmitter {
         const t = await request.json()
         this.token = t.access_token
         this.refresh = t.refresh_token
-        fs.writeFile("./.data/token", JSON.stringify({
+        fs.writeFile("./token", JSON.stringify({
             token: t.access_token,
             refresh: t.refresh_token,
             expires_in: Date.now() + (t.expires_in * 1000)
@@ -82,7 +82,7 @@ export default new class Auth extends EventEmitter {
             }
             const request = await fetch(`https://osu.ppy.sh/api/v2${url}`, {
                 headers: {
-                    "Authorization": "Bearer " + token || this.token,
+                    "Authorization": "Bearer " + (token || this.token),
                     "scope": "*", //? Not sure if i need this
                     "user-agent": "osu-lazer"
                 }
