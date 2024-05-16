@@ -3,7 +3,6 @@ import database from "../helper/database.js"
 import { getSafename } from "../helper/system.js"
 import { getUser } from "../modules/fetch.js"
 import { trackerWebhook } from "../config.js";
-import migrate from "./users/migrate.js"
 import { WebhookClient, EmbedBuilder } from 'discord.js'
 const webhookClient = new WebhookClient({ url: trackerWebhook })
 import Logger from "cutesy.js"
