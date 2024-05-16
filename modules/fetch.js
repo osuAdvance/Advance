@@ -1,23 +1,37 @@
 import database from "../helper/database.js"
 import auth from "../helper/auth.js"
 import { getSafename, getTime, sleep } from "../helper/system.js";
-import { includeFailed } from "../config.js";
+import { includeFailed, trackerWebhook } from "../config.js";
 import { convertToNumber } from "../helper/mods.js";
 import userCache from "../constants/cache.js";
+import { WebhookClient, EmbedBuilder } from 'discord.js'
+const webhookClient = new WebhookClient({ url: trackerWebhook })
+import Logger from "cutesy.js"
+const log = new Logger().changeTag("Fetch").red()
+
 export async function getUser(id, discord){
     const modes = ["osu", "taiko", "fruits", "mania"]
     const result = []
+    const currentTime = getTime()
+    const year = parseInt(new Date().getFullYear())
     for(const m in modes){
         const mode = modes[m]
         const user = await auth.request(`/users/${id}/${mode}?key=id`)
         if(m == 0){
+            const usersTracked = (await database.awaitQuery(`SELECT COUNT(*) count FROM users WHERE available = 1`))[0].count - 1
+            const DiscordIDMessage = discord ? `<@${discord}>` : ""
+
             if(user.error === "null"){
                 //Restricted
                 await database.awaitQuery(`UPDATE users SET available = 0 WHERE userid = ${id}`)
+                const embed = new EmbedBuilder().setTitle(`${check.username} (${id}) is no longer tracked!`).setColor(0xD2042D).setThumbnail(`https://a.ppy.sh/${id}`).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${usersTracked}` })
+                webhookClient.send({
+                    content: DiscordIDMessage,
+                    embeds: [embed],
+                })
+                log.send(`${check.username} (${id}) - No longer tracked - Users tracked: ${usersTracked} - Discord: ${discord}`)
                 return 0;
             }
-
-            const currentTime = getTime()
 
             //Namechanges and stuff
         
@@ -42,11 +56,11 @@ export async function getUser(id, discord){
         }
 
         const stat = user.statistics
-        const rank = (await database.awaitQuery(`SELECT * FROM stats
+        const rank = (await database.awaitQuery(`SELECT * FROM stats_${year}
         WHERE user = ${id} AND mode = ${m} AND time > ${currentTime - (60 * 60 * 24)} `))[0]
 
         if(!rank){
-            database.awaitQuery(`INSERT INTO stats 
+            database.awaitQuery(`INSERT INTO stats_${year}
             (user, global, country, pp, accuracy, playcount, playtime, score, hits, level, progress, mode, time) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                 id, stat.global_rank || stat.global_rank_exp, stat.country_rank, Math.floor(stat.pp || stat.pp_exp),
@@ -61,7 +75,7 @@ export async function getUser(id, discord){
         if(!stat.is_ranked) continue;
         if(rank.playcount == stat.play_count) continue;
 
-        await database.awaitQuery(`UPDATE stats
+        await database.awaitQuery(`UPDATE stats_${year}
         SET global = ?, country = ?, pp = ?, accuracy = ?, playcount = ?, playtime = ?, score = ?, hits = ?, level = ?, progress = ?
         WHERE user = ${id} AND mode = ${m} AND time = ${rank.time}`, [
             stat.global_rank, stat.country_rank, Math.floor(stat.pp),
@@ -73,7 +87,7 @@ export async function getUser(id, discord){
     }
 
     for(var i = 0; i < result.length; i++) {
-        getScores(user.id, result[i])
+        getScores(id, result[i])
     }
     return 1;
 }
@@ -100,7 +114,7 @@ async function getScores(id, mode){
     }
 
     if(allScores.length < 1) return;
-    const databaseCache = await database.awaitQuery(`SELECT scoreid, pp, time FROM scores WHERE user = ${id} AND mode = ${allScores[0].mode_int}`)
+    const databaseCache = await database.awaitQuery(`SELECT scoreid, pp, time FROM scores_${year} WHERE user = ${id} AND mode = ${allScores[0].mode_int}`)
     const values = []
     
     for(let i = 0; i < allScores.length; i++) {
@@ -114,7 +128,7 @@ async function getScores(id, mode){
     
         if(check){
             if(check.pp == score.pp || score.pp == null) continue;
-            database.awaitQuery(`UPDATE scores SET pp = ${score.pp} WHERE user = ${id} AND scoreid = ${score.id} AND time = ${scoreTime}`)
+            database.awaitQuery(`UPDATE scores_${year} SET pp = ${score.pp} WHERE user = ${id} AND scoreid = ${score.id} AND time = ${scoreTime}`)
             continue;
         }
 
@@ -163,7 +177,7 @@ async function getScores(id, mode){
 
     if(values.length < 1) return;
         
-    await database.awaitQuery(`INSERT INTO scores 
+    await database.awaitQuery(`INSERT INTO scores_${year}
     (user, beatmap, scoreid, score, accuracy, maxcombo, count50, count100, count300, countmiss, countkatu, countgeki, 
     fc, mods, time, \`rank\`, passed, pp, mode, calculated, added)
     VALUES ${"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?),".repeat(values.length / 21).slice(0, -1)}`, values)
