@@ -20,6 +20,7 @@ export async function getUser(id, discord){
         if(m == 0){
             const usersTracked = (await database.awaitQuery(`SELECT COUNT(*) count FROM users WHERE available = 1`))[0].count - 1
             const DiscordIDMessage = discord ? `<@${discord}>` : ""
+            const check = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ?`, [ id ]))[0]
 
             if(!user){
                 //Restricted
@@ -32,10 +33,8 @@ export async function getUser(id, discord){
                 log.send(`${check.username} (${id}) - No longer tracked - Users tracked: ${usersTracked} - Discord: ${discord}`)
                 return 0;
             }
-
             //Namechanges and stuff
         
-            const check = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ?`, [ user.id ]))[0]
             if(!check){
                 await database.awaitQuery(`
                 INSERT INTO users (userid, username, username_safe, country, added, restricted, discord)
