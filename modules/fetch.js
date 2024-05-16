@@ -21,7 +21,7 @@ export async function getUser(id, discord){
             const usersTracked = (await database.awaitQuery(`SELECT COUNT(*) count FROM users WHERE available = 1`))[0].count - 1
             const DiscordIDMessage = discord ? `<@${discord}>` : ""
 
-            if(user.error === "null"){
+            if(!user){
                 //Restricted
                 await database.awaitQuery(`UPDATE users SET available = 0 WHERE userid = ${id}`)
                 const embed = new EmbedBuilder().setTitle(`${check.username} (${id}) is no longer tracked!`).setColor(0xD2042D).setThumbnail(`https://a.ppy.sh/${id}`).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${usersTracked}` })
