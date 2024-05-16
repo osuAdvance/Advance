@@ -8,7 +8,7 @@ const fastify = f({ logger: false, trustProxy: true })
 
 async function run(){
     fastify.addHook('onResponse', async (req, reply) => {
-        const time = parseFloat(reply.getResponseTime().toFixed(2))
+        const time = parseFloat(reply.elapsedTime.toFixed(2))
         log.send(`${req.ips ? req.ips[req.ips.length - 1] : req.ip} -> ${req.url} (${reply.statusCode}) - ${time}ms`)
     })
 
