@@ -1,61 +1,47 @@
 import database from "../helper/database.js"
-import { GET } from "../helper/auth.js"
+import auth from "../helper/auth.js"
 import { getSafename, getTime, sleep } from "../helper/system.js";
 import { includeFailed } from "../config.js";
 import { convertToNumber } from "../helper/mods.js";
 import userCache from "../constants/cache.js";
 export async function getUser(id, discord){
-    const user = await GET("https://osu.ppy.sh/api/v2/me", id) //:)
-
-    if(user.authentication == "basic"){
-        //Revoked token
-        await database.awaitQuery(`UPDATE users SET available = 0 WHERE userid = ${id}`)
-        return 0;
-    }
-    const currentTime = getTime()
-
-    //Namechanges and stuff
-
-    const check = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ?`, [ user.id ]))[0]
-    if(!check){
-        await database.awaitQuery(`
-        INSERT INTO users (userid, username, username_safe, country, added, restricted, discord)
-        VALUES (?, ?, ?, ?, ?, ?, ?)`, [
-            user.id, user.username, getSafename(user.username), user.country_code, currentTime, +user.is_restricted, discord
-        ])
-    } else {
-        if(check.username != user.username || check.country != user.country_code || check.restricted != +user.is_restricted){
-            database.awaitQuery(`UPDATE users SET username = ?, username_safe = ?, country = ?, restricted = ? WHERE userid = ?`, [
-                user.username,
-                user.username.toLowerCase().replaceAll(" ", "_"),
-                user.country_code,
-                +user.is_restricted,
-                id
-            ])
-        }
-    }
-
-    if(user.is_restricted) return 1;
-
-    const modes = await getStats(user.id, user.statistics_rulesets)
-
-    for(var i = 0; i < modes.length; i++) {
-        getScores(user.id, modes[i])
-    }
-    return 1;
-}
-
-async function getStats(id, stats){
-    const currentTime = getTime()
-    const result = []
     const modes = ["osu", "taiko", "fruits", "mania"]
-
+    const result = []
     for(const m in modes){
         const mode = modes[m]
-        if(!stats) continue;
-        const stat = stats[mode]
-        if(!stat) continue;
+        const user = await auth.request(`https://osu.ppy.sh/api/v2/users/${id}/${mode}?key=id`)
+        if(m == 0){
+            if(user.error === "null"){
+                //Restricted
+                await database.awaitQuery(`UPDATE users SET available = 0 WHERE userid = ${id}`)
+                return 0;
+            }
 
+            const currentTime = getTime()
+
+            //Namechanges and stuff
+        
+            const check = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ?`, [ user.id ]))[0]
+            if(!check){
+                await database.awaitQuery(`
+                INSERT INTO users (userid, username, username_safe, country, added, restricted, discord)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`, [
+                    user.id, user.username, getSafename(user.username), user.country_code, currentTime, 0, discord
+                ])
+            } else {
+                if(check.username != user.username || check.country != user.country_code){
+                    database.awaitQuery(`UPDATE users SET username = ?, username_safe = ?, country = ?, restricted = ? WHERE userid = ?`, [
+                        user.username,
+                        user.username.toLowerCase().replaceAll(" ", "_"),
+                        user.country_code,
+                        0,
+                        id
+                    ])
+                }
+            }
+        }
+
+        const stat = user.statistics
         const rank = (await database.awaitQuery(`SELECT * FROM stats
         WHERE user = ${id} AND mode = ${m} AND time > ${currentTime - (60 * 60 * 24)} `))[0]
 
@@ -86,15 +72,18 @@ async function getStats(id, stats){
         result.push(mode)
     }
 
-    return result
+    for(var i = 0; i < result.length; i++) {
+        getScores(user.id, result[i])
+    }
+    return 1;
 }
 
 async function getScores(id, mode){
     const currentTime = getTime()
     const scoreCache = []
     const [ bestScores, recentScores ] = await Promise.all([
-        GET(`https://osu.ppy.sh/api/v2/users/${id}/scores/best?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id),
-        GET(`https://osu.ppy.sh/api/v2/users/${id}/scores/recent?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id)
+        auth.request(`https://osu.ppy.sh/api/v2/users/${id}/scores/best?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id),
+        auth.request(`https://osu.ppy.sh/api/v2/users/${id}/scores/recent?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id)
     ])
     
     if(bestScores.error == "Too Many Attempts." || recentScores.error == "Too Many Attempts."){
