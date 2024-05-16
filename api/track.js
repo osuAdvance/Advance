@@ -10,7 +10,7 @@ export default async function(req, reply){
     const token = await auth.authenticate(req.query.code)
     if(token.error == "invalid_request") return reply.send({ error: "Access denied, please authorize our Application."}) 
     
-    const user = await auth.request("https://osu.ppy.sh/api/v2/me", token.access_token)
+    const user = await auth.request("/me", token.access_token)
     const time = Math.floor(new Date().getTime() / 1000)
 
     const check = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ${user.id}`))[0]

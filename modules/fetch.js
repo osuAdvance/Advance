@@ -9,7 +9,7 @@ export async function getUser(id, discord){
     const result = []
     for(const m in modes){
         const mode = modes[m]
-        const user = await auth.request(`https://osu.ppy.sh/api/v2/users/${id}/${mode}?key=id`)
+        const user = await auth.request(`/users/${id}/${mode}?key=id`)
         if(m == 0){
             if(user.error === "null"){
                 //Restricted
@@ -82,8 +82,8 @@ async function getScores(id, mode){
     const currentTime = getTime()
     const scoreCache = []
     const [ bestScores, recentScores ] = await Promise.all([
-        auth.request(`https://osu.ppy.sh/api/v2/users/${id}/scores/best?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id),
-        auth.request(`https://osu.ppy.sh/api/v2/users/${id}/scores/recent?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id)
+        auth.request(`/users/${id}/scores/best?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id),
+        auth.request(`/users/${id}/scores/recent?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id)
     ])
     
     if(bestScores.error == "Too Many Attempts." || recentScores.error == "Too Many Attempts."){

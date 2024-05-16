@@ -1,9 +1,8 @@
 import fetch from "node-fetch"
-import { clientID, clientSecret, redirect } from "../config.js"
+import { clientID, clientSecret, redirect, username, password } from "../config.js"
 import { EventEmitter } from "events"
 import fs from "fs/promises"
 import Logger from "cutesy.js"
-import fetch from "node-fetch"
 const authLog = new Logger().addTimestamp("hh:mm:ss").changeTag("Auth")
 
 export default new class Auth extends EventEmitter {
@@ -17,7 +16,7 @@ export default new class Auth extends EventEmitter {
     login(){
         return new Promise(async (resolve) => {
             try {
-                const file = JSON.parse(await fs.readFile("./.data/token", "utf8"))
+                const file = JSON.parse(await fs.readFile("./token", "utf8"))
                 this.token = file.token
                 this.refresh = file.refresh
                 const expire = file.expires_in - Date.now()
@@ -25,8 +24,8 @@ export default new class Auth extends EventEmitter {
                 setTimeout(async () => await this.update(), expire)
             } catch {
                 await this.auth({
-                    username: process.env.user,
-                    password: process.env.password,
+                    username,
+                    password,
                     grant_type: "password",
                     scope: "*"
                 })
