@@ -25,7 +25,7 @@ export async function getUser(id, discord){
             if(!user){
                 //Restricted
                 await database.awaitQuery(`UPDATE users SET available = 0 WHERE userid = ${id}`)
-                const embed = new EmbedBuilder().setTitle(`${check.username} (${id}) is no longer tracked!`).setColor(0xD2042D).setThumbnail(`https://a.ppy.sh/${id}`).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${usersTracked}` })
+                const embed = new EmbedBuilder().setTitle(`${check.username} (${id}) got restricted!`).setColor(0xD2042D).setThumbnail(`https://a.ppy.sh/${id}`).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${usersTracked}` })
                 webhookClient.send({
                     content: DiscordIDMessage,
                     embeds: [embed],

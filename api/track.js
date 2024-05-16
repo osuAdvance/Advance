@@ -18,6 +18,7 @@ export default async function(req, reply){
     const time = Math.floor(new Date().getTime() / 1000)
 
     const check = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ${user.id}`))[0]
+    const usersTracked = (await database.awaitQuery(`SELECT COUNT(*) count FROM users WHERE available = 1`))[0].count + 1
     if(check){
         await database.awaitQuery(`UPDATE users SET available = 1, discord = "${req.query.state}" WHERE userid = ${user.id}`)
         check.available = 1
@@ -27,7 +28,7 @@ export default async function(req, reply){
     }
 
     if(!user.is_restricted) await getUser(user.id, req.query.state)
-    const embed = new EmbedBuilder().setTitle(`${user.username} (${user.id}) is now tracked!`).setColor(0xD2042D).setThumbnail(`https://a.ppy.sh/${user.id}`).setTimes>
+    const embed = new EmbedBuilder().setTitle(`${user.username} (${user.id}) is now tracked!`).setColor(0xD2042D).setThumbnail(`https://a.ppy.sh/${user.id}`).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${usersTracked}` })
     webhookClient.send({
         embeds: [embed],
     })
