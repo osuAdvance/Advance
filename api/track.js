@@ -2,7 +2,12 @@ import auth from "../helper/auth.js"
 import database from "../helper/database.js"
 import { getSafename } from "../helper/system.js"
 import { getUser } from "../modules/fetch.js"
+import { trackerWebhook } from "../config.js";
 import migrate from "./users/migrate.js"
+import { WebhookClient, EmbedBuilder } from 'discord.js'
+const webhookClient = new WebhookClient({ url: trackerWebhook })
+import Logger from "cutesy.js"
+const log = new Logger().changeTag("Tracker").red()
 
 export default async function(req, reply){
     if(req.query?.error) return reply.send({ error: "Access denied, please authorize our Application."})
@@ -23,13 +28,16 @@ export default async function(req, reply){
     }
 
     if(!user.is_restricted) await getUser(user.id, req.query.state)
+    const embed = new EmbedBuilder().setTitle(`${user.username} (${user.id}) is now tracked!`).setColor(0xD2042D).setThumbnail(`https://a.ppy.sh/${user.id}`).setTimes>
+    webhookClient.send({
+        embeds: [embed],
+    })
+    log.send(`${user.username} (${user.id}) - Added user to system - Users tracked: ${usersTracked}`)
     reply.send({ message: "Added user to system", user: {
         userid: user.id,
         username: user.username,
         username_safe: getSafename(user.username),
         added: time
     }})
-
-    await migrate({params : { username: user.id }}, {send: (() => {})})
     return reply;
 }
