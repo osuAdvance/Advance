@@ -113,21 +113,20 @@ async function getScores(id, mode, year){
     
     for(let i = 0; i < allScores.length; i++) {
         const score = allScores[i]
-        if(scoreCache.indexOf(score.id) != -1) continue;
-        scoreCache.push(score.id)
-    
         const scoreTime = getTime(score.created_at)
+        if(scoreCache.indexOf(scoreTime) != -1) continue;
+        scoreCache.push(scoreTime)
     
-        const check = databaseCache.filter(s => s.scoreid == score.id || (s.user == id && s.pp == score.pp && s.time == scoreTime))?.[0]
-    
+        const check = databaseCache.filter(s => s.time == scoreTime)?.[0]
+
         if(check){
-            if(check.pp == score.pp || score.pp == null) continue;
-            database.awaitQuery(`UPDATE scores_${year} SET pp = ${score.pp} WHERE user = ${id} AND scoreid = ${score.id} AND time = ${scoreTime}`)
+            if((check.pp == score.pp) || (score.pp == null)) continue;
+            await database.awaitQuery(`UPDATE scores_${year} SET pp = ${score.pp} WHERE user = ${id} AND scoreid = ${score.id} AND time = ${scoreTime}`)
             continue;
         }
 
         values.push(
-            score.user_id, score.beatmap.id, score.id, score.score, score.accuracy * 100, score.max_combo,
+            score.user_id, score.beatmap.id, score.id || null, score.score, score.accuracy * 100, score.max_combo,
             score.statistics.count_50, score.statistics.count_100, score.statistics.count_300,
             score.statistics.count_miss, score.statistics.count_katu, score.statistics.count_geki,
             +score.perfect, convertToNumber(score.mods) || 0, scoreTime,
