@@ -28,8 +28,8 @@ export default async function(req, reply){
     }
 
     if(user.is_restricted) return reply.send({ error: "We do not support tracking for restricted players. You can track the moment you get unrestricted."})
-    await getUser([user.id], req.query.state)
-    const embed = new EmbedBuilder().setTitle(`${user.username} (${user.id}) is now tracked!`).setColor(0xD2042D).setThumbnail(`https://a.ppy.sh/${user.id}`).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${usersTracked}` })
+    await getUser([{ id: user.id, username: user.username }], req.query.state)
+    const embed = new EmbedBuilder().setTitle(`${user.username} (${user.id}) is now tracked!`).setColor(0x86DC3D).setThumbnail(`https://a.ppy.sh/${user.id}`).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${usersTracked}` })
     webhookClient.send({
         embeds: [embed],
     })
