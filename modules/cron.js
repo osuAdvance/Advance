@@ -8,11 +8,12 @@ const webhookClient = new WebhookClient({ url: trackerWebhook })
 const logger = new Logger().addTimestamp("hh:mm:ss").changeTag("Fetch").purple()
 function update(){
     return new Promise(async (resolve) => {
-        const users = await database.awaitQuery(`SELECT userid, username FROM users WHERE available = 1`)
+        const users = await database.awaitQuery(`SELECT userid id, username FROM users WHERE available = 1`)
         logger.send(`Updating ${users.length} Users`)
-        for(let i = 0; i < users.length; i++){
-            logger.send(`${(i + 1)}/${users.length} Updating ${users[i].username}`)
-            await getUser(users[i].userid)
+        for(let i = 150; i < users.length; i += 50){
+            const chunk = users.slice(i, i + 50);
+            logger.send(`Updating Batch ${(Math.floor(i / 50) + 1)}/${Math.floor(users.length / 50)}`)
+            await getUser(chunk)
         }
         const embed = new EmbedBuilder().setTitle("Update finished!").setColor(0x0000FF).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${users.length}` })
         webhookClient.send({

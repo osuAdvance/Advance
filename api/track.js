@@ -6,7 +6,7 @@ import { trackerWebhook } from "../config.js";
 import { WebhookClient, EmbedBuilder } from 'discord.js'
 const webhookClient = new WebhookClient({ url: trackerWebhook })
 import Logger from "cutesy.js"
-const log = new Logger().changeTag("Tracker").red()
+const log = new Logger().changeTag("Tracker").green()
 
 export default async function(req, reply){
     if(req.query?.error) return reply.send({ error: "Access denied, please authorize our Application."})
@@ -23,21 +23,21 @@ export default async function(req, reply){
         await database.awaitQuery(`UPDATE users SET available = 1, discord = "${req.query.state}" WHERE userid = ${user.id}`)
         check.available = 1
         delete check.discord
-        await getUser(user.id, req.query.state)
+        await getUser([{ id: user.id, username: user.username }], req.query.state)
         return reply.send({ message: "Updated User", user: check })
     }
 
-    if(!user.is_restricted) await getUser(user.id, req.query.state)
+    if(user.is_restricted) return reply.send({ error: "We do not support tracking for restricted players. You can track the moment you get unrestricted."})
+    await getUser([user.id], req.query.state)
     const embed = new EmbedBuilder().setTitle(`${user.username} (${user.id}) is now tracked!`).setColor(0xD2042D).setThumbnail(`https://a.ppy.sh/${user.id}`).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${usersTracked}` })
     webhookClient.send({
         embeds: [embed],
     })
     log.send(`${user.username} (${user.id}) - Added user to system - Users tracked: ${usersTracked}`)
-    reply.send({ message: "Added user to system", user: {
+    return reply.send({ message: "Added user to system", user: {
         userid: user.id,
         username: user.username,
         username_safe: getSafename(user.username),
         added: time
     }})
-    return reply;
 }
