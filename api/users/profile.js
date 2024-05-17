@@ -16,7 +16,7 @@ export default async function (req, reply) {
     if(cache[user.userid]?.[year]?.profile) return reply.send(cache[user.userid][year].profile)
     if(!cache[user.userid]) cache[user.userid] = {}
     if(!cache[user.userid][year]) cache[user.userid][year] = {}
-    const scores = cache[user.userid][year].scores || await database.awaitQuery(`SELECT * FROM scores_${year} s JOIN beatmaps b ON s.beatmap = b.beatmapid WHERE s.time > ${Math.floor(new Date(year, 0, 1, 0, 0, 0, 0).getTime())} AND s.user = ${user.userid} AND mode = ${mode}`)
+    const scores = cache[user.userid][year].scores || await database.awaitQuery(`SELECT * FROM scores_${year} s JOIN beatmaps b ON s.beatmap = b.beatmapid WHERE s.time > ${Math.floor(new Date(year, 0, 1, 0, 0, 0, 0).getTime() / 1000)} AND s.user = ${user.userid} AND mode = ${mode}`)
     const stats = cache[user.userid][year].stats || await database.awaitQuery(`SELECT * FROM stats_${year} WHERE user = ${user.userid} AND mode = ${mode} ORDER BY time DESC`)
     cache[user.userid][year].stats = stats;
     const peaks = new Array(...stats).sort((a, b) => a.global < b.global ? -1 : 1)
