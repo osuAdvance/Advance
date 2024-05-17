@@ -9,9 +9,11 @@ export default async function(req, reply){
     const offset = req.query?.offset || 0
     const mode = req.query?.mode || 0
     const user = (await database.awaitQuery(`SELECT * FROM users WHERE username_safe = "${getSafename(username)}"`))[0]
+    let year = (req.query?.year >> 0) || new Date().getFullYear()
+    if (year < 2023 || year > 2024) year = 2024
     if(!user) return reply.send({ error: "User not found" })
     const scores = await database.awaitQuery(`
-        SELECT global, country, time FROM stats
+        SELECT global, country, time FROM stats_${year}
         WHERE user = ${user.userid} AND time > ${dataStart} AND mode = ${mode}
         ORDER BY time DESC
         LIMIT ${limit} OFFSET ${offset}

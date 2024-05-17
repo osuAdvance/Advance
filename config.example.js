@@ -9,6 +9,8 @@ export const database = {
 export const clientID = "0"
 export const clientSecret = "somefunnycharacters"
 export const redirect = "https://advance.lemres.de/api/verify"
+export const username = "Nanoo"
+export const password = "BanchoPassword"
 export const includeFailed = true
 export const fetchRate = 60 //minutes between each fetch
 
