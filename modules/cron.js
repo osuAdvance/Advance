@@ -10,7 +10,7 @@ function update(){
     return new Promise(async (resolve) => {
         const users = await database.awaitQuery(`SELECT userid id, username FROM users WHERE available = 1`)
         logger.send(`Updating ${users.length} Users`)
-        for(let i = 150; i < users.length; i += 50){
+        for(let i = 0; i < users.length; i += 50){
             const chunk = users.slice(i, i + 50);
             logger.send(`Updating Batch ${(Math.floor(i / 50) + 1)}/${Math.floor(users.length / 50)}`)
             await getUser(chunk)
