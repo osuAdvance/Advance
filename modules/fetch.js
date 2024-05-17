@@ -73,9 +73,10 @@ export async function getUser(profiles, discord){
             if(!stat.is_ranked) continue;
             if(rank.playcount == stat.play_count) continue;
 
-            process.send({ id, type: "profile" })
-            process.send({ id, type: "stats" })
-            process.send({ id, type: "card" })
+            process.send({ id, year, type: "profile" })
+            process.send({ id, year, type: "stats" })
+            process.send({ id, year, type: "card" })
+            process.send({ id, year, type: "wrapped"})
 
             await database.awaitQuery(`UPDATE stats_${year}
             SET global = ?, country = ?, pp = ?, accuracy = ?, playcount = ?, playtime = ?, score = ?, hits = ?, level = ?, progress = ?
@@ -179,5 +180,5 @@ async function getScores(id, mode, year){
     fc, mods, time, \`rank\`, passed, pp, mode, calculated, added)
     VALUES ${"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?),".repeat(values.length / 21).slice(0, -1)}`, values)
 
-    process.send({ id, type: "scores" })
+    process.send({ id, year, type: "scores" })
 }

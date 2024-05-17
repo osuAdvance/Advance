@@ -15,6 +15,4 @@ fastify.addHook('onResponse', async (req, reply) => {
 fastify.register(api, { prefix: '/api' })
 await fastify.listen({ port, host })
 const fetch = fork("modules/cron.js")
-fetch.on("message", ({ id, type }) => {
-    delete cache[id]?.[type]
-})
+fetch.on("message", ({ id, year, type }) => delete cache[id]?.[year]?.[type])

@@ -3,17 +3,22 @@ import { getSafename } from "../../helper/system.js"
 import favMod from "../../worker/favmod.js"
 import favStats from "../../worker/favstats.js"
 import genTags from "../../worker/tags.js"
+import cache from "../../constants/cache.js"
 
 export default async function (req, reply) {
     const username = req.params?.username
     const mode = req.query?.mode || 0
     let year = (req.query?.year >> 0) || new Date().getFullYear()
     if (year < 2023 || year > 2024) year = 2024
-    if(!username) return reply.send({ error: "Invalid username" })
+    if(!username) return reply.code(400).send({ error: "Invalid username" })
     let user = (await database.awaitQuery(`SELECT * FROM users WHERE username_safe = "${getSafename(username)}" or discord = "${username}"`))[0]
-    if(!user) return reply.send({ error: "User not in the system" })
-    let scores = await database.awaitQuery(`SELECT * FROM scores_${year} s JOIN beatmaps b ON s.beatmap = b.beatmapid WHERE s.user = ${user.userid} AND mode = ${mode}`)
-    let stats = await database.awaitQuery(`SELECT * FROM stats_${year} WHERE user = ${user.userid} AND mode = ${mode} ORDER BY time DESC`)
+    if(!user) return reply.code(404).send({ error: "User not in the system" })
+    if(cache[user.userid]?.[year]?.profile) return reply.send(cache[user.userid][year].profile)
+    if(!cache[user.userid]) cache[user.userid] = {}
+    if(!cache[user.userid][year]) cache[user.userid][year] = {}
+    const scores = cache[user.userid][year].scores || await database.awaitQuery(`SELECT * FROM scores_${year} s JOIN beatmaps b ON s.beatmap = b.beatmapid WHERE s.user = ${user.userid} AND mode = ${mode}`)
+    const stats = cache[user.userid][year].stats || await database.awaitQuery(`SELECT * FROM stats_${year} WHERE user = ${user.userid} AND mode = ${mode} ORDER BY time DESC`)
+    cache[user.userid][year].stats = stats;
     const peaks = new Array(...stats).sort((a, b) => a.global < b.global ? -1 : 1)
 
     user.rank = {
@@ -26,7 +31,12 @@ export default async function (req, reply) {
 
     delete user.discord
 
-    if(scores.length < 1) return reply.send(user)
+    if(scores.length < 1){
+        cache[user.userid][year].profile = user;
+        return reply.send(user)
+    }
+
+    cache[user.userid][year].scores = scores;
 
     const recent = new Array(...scores).sort((a, b) => a.time > b.time ? -1 : 1)
     const best = new Array(...scores).sort((a, b) => a.pp > b.pp ? -1 : 1)
@@ -58,8 +68,8 @@ export default async function (req, reply) {
         songs: bsets
     }
 
-    recent.length = 3
-    best.length = 3
+    recent.length = 5
+    best.length = 5
 
     user.scores = {
         total: scores.length,
@@ -67,5 +77,6 @@ export default async function (req, reply) {
         recent,
         best
     }
-    return user
+    cache[user.userid][year].profile = user;
+    return reply.send(user)
 }
