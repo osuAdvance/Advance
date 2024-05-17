@@ -12,7 +12,7 @@ export async function getUser(id, discord){
     const modes = ["osu", "taiko", "fruits", "mania"]
     const result = []
     const currentTime = getTime()
-    const year = parseInt(new Date().getFullYear())
+    const year = new Date().getFullYear()
     for(const m in modes){
         const mode = modes[m]
         const user = await auth.request(`/users/${id}/${mode}?key=id`)
@@ -85,16 +85,16 @@ export async function getUser(id, discord){
     }
 
     for(var i = 0; i < result.length; i++) {
-        await getScores(id, result[i])
+        await getScores(id, result[i], year)
     }
     return 1;
 }
 
-async function getScores(id, mode){
+async function getScores(id, mode, year){
     const currentTime = getTime()
     const scoreCache = []
-    const bestScores = await auth.request(`/users/${id}/scores/best?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id)
-    const recentScores = await auth.request(`/users/${id}/scores/recent?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id)
+    const bestScores = await auth.request(`/users/${id}/scores/best?mode=${mode}&include_fails=${+includeFailed}&limit=100`)
+    const recentScores = await auth.request(`/users/${id}/scores/recent?mode=${mode}&include_fails=${+includeFailed}&limit=100`)
 
     if(bestScores.error == "Too Many Attempts." || recentScores.error == "Too Many Attempts."){
         await sleep(60000)
