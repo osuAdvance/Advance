@@ -12,7 +12,7 @@ function update(){
         logger.send(`Updating ${users.length} Users`)
         for(let i = 0; i < users.length; i += 50){
             const chunk = users.slice(i, i + 50);
-            logger.send(`Updating Batch ${(Math.floor(i / 50) + 1)}/${Math.floor(users.length / 50)}`)
+            logger.send(`Updating Batch ${(Math.floor(i / 50) + 1)}/${Math.floor(users.length / 50) + 1}`)
             await getUser(chunk)
         }
         const embed = new EmbedBuilder().setTitle("Update finished!").setColor(0x0000FF).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${users.length}` })
