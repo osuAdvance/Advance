@@ -3,7 +3,6 @@ import auth from "../helper/auth.js"
 import { getSafename, getTime, sleep } from "../helper/system.js";
 import { includeFailed, trackerWebhook } from "../config.js";
 import { convertToNumber } from "../helper/mods.js";
-import userCache from "../constants/cache.js";
 import { WebhookClient, EmbedBuilder } from 'discord.js'
 const webhookClient = new WebhookClient({ url: trackerWebhook })
 import Logger from "cutesy.js"
@@ -86,7 +85,7 @@ export async function getUser(id, discord){
     }
 
     for(var i = 0; i < result.length; i++) {
-        getScores(id, result[i])
+        await getScores(id, result[i])
     }
     return 1;
 }
@@ -94,14 +93,12 @@ export async function getUser(id, discord){
 async function getScores(id, mode){
     const currentTime = getTime()
     const scoreCache = []
-    const [ bestScores, recentScores ] = await Promise.all([
-        auth.request(`/users/${id}/scores/best?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id),
-        auth.request(`/users/${id}/scores/recent?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id)
-    ])
-    
+    const bestScores = await auth.request(`/users/${id}/scores/best?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id)
+    const recentScores = await auth.request(`/users/${id}/scores/recent?mode=${mode}&include_fails=${+includeFailed}&limit=100`, id)
+
     if(bestScores.error == "Too Many Attempts." || recentScores.error == "Too Many Attempts."){
         await sleep(60000)
-        return resolve(await getScores(id, mode))
+        return await getScores(...arguments)
     }
     let allScores = []
     try {
@@ -180,6 +177,4 @@ async function getScores(id, mode){
     (user, beatmap, scoreid, score, accuracy, maxcombo, count50, count100, count300, countmiss, countkatu, countgeki, 
     fc, mods, time, \`rank\`, passed, pp, mode, calculated, added)
     VALUES ${"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?),".repeat(values.length / 21).slice(0, -1)}`, values)
-
-    delete userCache[id]
 }
