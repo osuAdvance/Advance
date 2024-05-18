@@ -7,7 +7,7 @@ import { WebhookClient, EmbedBuilder } from 'discord.js'
 const webhookClient = new WebhookClient({ url: trackerWebhook })
 const logger = new Logger().addTimestamp("hh:mm:ss").changeTag("Fetch").purple()
 
-const stats = await database.awaitQuery(`SELECT user, playcount, time, mode FROM (SELECT user, playcount, time, mode, ROW_NUMBER() OVER (PARTITION BY user, mode ORDER BY time DESC) AS rn FROM stats_2024 s JOIN users u ON s.user = u.userid WHERE u.available = 1) AS ranked WHERE rn = 1`)
+const stats = await database.awaitQuery(`SELECT user, playcount, time, mode FROM (SELECT user, playcount, time, mode, ROW_NUMBER() OVER (PARTITION BY user, mode ORDER BY time DESC) AS rn FROM stats_${new Date().getFullYear()} s, users u WHERE s.user = u.userid AND u.available = 1) AS ranked WHERE rn = 1`)
 fillCache(stats);
 
 function update(){
