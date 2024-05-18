@@ -9,12 +9,20 @@ import Logger from "cutesy.js"
 const log = new Logger().addTimestamp("hh:mm:ss").changeTag("Fetch").purple()
 const cache = {}
 
+export function fillCache(data){
+    for(let i = 0; i < data.length; i++){
+        const { user, playcount, time, mode } = data[i]
+        if(!cache[user]) cache[user] = {}
+        cache[user][mode] = { playcount, time }
+    }
+}
+
 export async function getUser(profiles, discord){
     const modes = ["osu", "taiko", "fruits", "mania"]
-    const result = []
     const ids = profiles.map((u) => u.id)
     const users = await auth.request(`/users?ids[]=${ids.join("&ids[]=")}`)
     for(let i = 0; i < profiles.length; i++){
+        const result = []
         const currentTime = getTime()
         const year = new Date().getFullYear()
         const { id, username } = profiles[i]
@@ -24,7 +32,7 @@ export async function getUser(profiles, discord){
         const DiscordIDMessage = discord ? `<@${discord}>` : ""
         if(!user){
             const usersTracked = (await database.awaitQuery(`SELECT COUNT(*) count FROM users WHERE available = 1`))[0].count - 1
-            await database.awaitQuery(`UPDATE users SET available = 0 WHERE userid = ${id}`)
+            database.awaitQuery(`UPDATE users SET available = 0 WHERE userid = ${id}`)
             const embed = new EmbedBuilder().setTitle(`${check.username} (${id}) got restricted!`).setColor(0xD2042D).setThumbnail(`https://a.ppy.sh/${id}`).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${usersTracked}` })
             webhookClient.send({
                 content: DiscordIDMessage,
@@ -55,13 +63,14 @@ export async function getUser(profiles, discord){
             const mode = modes[m]
             const stat = user.statistics_rulesets[mode]
             if(!stat) continue;
-            const rank = cache[id] || (await database.awaitQuery(`SELECT playcount, time FROM stats_${year}
+            const rank = cache[id]?.[m] || (await database.awaitQuery(`SELECT playcount, time FROM stats_${year}
             WHERE user = ${id} AND mode = ${m} ORDER BY time DESC`))[0]
             if(rank){
-                cache[id] = rank
+                if(!cache[id]) cache[id] = {}
+                cache[id][m] = rank
                 if(rank.playcount == stat.play_count) continue;
                 if(rank.time > currentTime - (60 * 60 * 24)){
-                    await database.awaitQuery(`UPDATE stats_${year}
+                    database.awaitQuery(`UPDATE stats_${year}
                     SET global = ?, country = ?, pp = ?, accuracy = ?, playcount = ?, playtime = ?, score = ?, hits = ?, level = ?, progress = ?
                     WHERE user = ${id} AND mode = ${m} AND time = ${rank.time}`, [
                         stat.global_rank, stat.country_rank, Math.floor(stat.pp),
@@ -69,8 +78,9 @@ export async function getUser(profiles, discord){
                         stat.total_hits, stat.level.current, stat.level.progress
                     ])
                 } else {
-                    cache[id] = { playcount: stat.play_count, time: currentTime }
-                    await database.awaitQuery(`INSERT INTO stats_${year}
+                    if(!cache[id]) cache[id] = {}
+                    cache[id][m] = { playcount: stat.play_count, time: currentTime }
+                    database.awaitQuery(`INSERT INTO stats_${year}
                     (user, global, country, pp, accuracy, playcount, playtime, score, hits, level, progress, mode, time) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                         id, stat.global_rank || stat.global_rank_exp, stat.country_rank, Math.floor(stat.pp || stat.pp_exp),
@@ -80,7 +90,9 @@ export async function getUser(profiles, discord){
                     ])
                 }
             } else {
-                await database.awaitQuery(`INSERT INTO stats_${year}
+                if(!cache[id]) cache[id] = {}
+                cache[id][m] = {}
+                database.awaitQuery(`INSERT INTO stats_${year}
                 (user, global, country, pp, accuracy, playcount, playtime, score, hits, level, progress, mode, time) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                     id, stat.global_rank || stat.global_rank_exp, stat.country_rank, Math.floor(stat.pp || stat.pp_exp),
@@ -132,10 +144,11 @@ async function getScores(id, mode, year){
         scoreCache.push(scoreTime)
     
         const check = databaseCache.filter(s => s.time == scoreTime)?.[0]
+        //? is this really faster than just asking mysql
 
         if(check){
             if((check.pp == score.pp) || (score.pp == null)) continue;
-            await database.awaitQuery(`UPDATE scores_${year} SET pp = ${score.pp} WHERE user = ${id} AND scoreid = ${score.id} AND time = ${scoreTime}`)
+            database.awaitQuery(`UPDATE scores_${year} SET pp = ${score.pp} WHERE user = ${id} AND scoreid = ${score.id} AND time = ${scoreTime}`)
             continue;
         }
 
@@ -150,7 +163,7 @@ async function getScores(id, mode, year){
         const beatmap = (await database.awaitQuery(`SELECT * FROM beatmaps WHERE beatmapid = ${score.beatmap.id}`))[0]
     
         if(!beatmap){
-            await database.awaitQuery(`INSERT INTO beatmaps (beatmapid, beatmapsetid, title, artist, creator, creatorid, version, length, ranked, added, last_update)
+            database.awaitQuery(`INSERT INTO beatmaps (beatmapid, beatmapsetid, title, artist, creator, creatorid, version, length, ranked, added, last_update)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                 score.beatmap.id,
                 score.beatmapset.id,
@@ -169,7 +182,7 @@ async function getScores(id, mode, year){
         const set = (await database.awaitQuery(`SELECT * FROM beatmapsets WHERE setid = ${score.beatmapset.id}`))[0]
     
         if(!set){
-            await database.awaitQuery(`INSERT INTO beatmapsets (setid, title, artist, creator, creatorid, added, last_update)
+            database.awaitQuery(`INSERT INTO beatmapsets (setid, title, artist, creator, creatorid, added, last_update)
             VALUES (?, ?, ?, ?, ?, ?, ?)`, [
                 score.beatmapset.id,
                 score.beatmapset.title,
@@ -184,7 +197,7 @@ async function getScores(id, mode, year){
 
     if(values.length < 1) return;
         
-    await database.awaitQuery(`INSERT INTO scores_${year}
+    database.awaitQuery(`INSERT INTO scores_${year}
     (user, beatmap, scoreid, score, accuracy, maxcombo, count50, count100, count300, countmiss, countkatu, countgeki, 
     fc, mods, time, \`rank\`, passed, pp, mode, calculated, added)
     VALUES ${"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?),".repeat(values.length / 21).slice(0, -1)}`, values)
