@@ -58,9 +58,12 @@ export async function getUser(profiles, discord){
             const rank = cache[id] || (await database.awaitQuery(`SELECT playcount, time FROM stats_${year}
             WHERE user = ${id} AND mode = ${m} ORDER BY time DESC`))[0]
             if(rank){
-                cache[id] = rank
-                if(rank.playcount == stat.play_count) continue;
+                if(rank.playcount == stat.play_count){
+                    cache[id] = rank
+                    continue;
+                }
                 if(rank.time > currentTime - (60 * 60 * 24)){
+                    cache[id] = { playcount: stat.play_count, time: currentTime }
                     await database.awaitQuery(`UPDATE stats_${year}
                     SET global = ?, country = ?, pp = ?, accuracy = ?, playcount = ?, playtime = ?, score = ?, hits = ?, level = ?, progress = ?
                     WHERE user = ${id} AND mode = ${m} AND time = ${rank.time}`, [
@@ -80,6 +83,7 @@ export async function getUser(profiles, discord){
                     ])
                 }
             } else {
+                cache[id] = { playcount: stat.play_count, time: currentTime }
                 await database.awaitQuery(`INSERT INTO stats_${year}
                 (user, global, country, pp, accuracy, playcount, playtime, score, hits, level, progress, mode, time) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
