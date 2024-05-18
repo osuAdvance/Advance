@@ -55,10 +55,29 @@ export async function getUser(profiles, discord){
             const stat = user.statistics_rulesets[mode]
             if(!stat) continue;
             const rank = (await database.awaitQuery(`SELECT * FROM stats_${year}
-            WHERE user = ${id} AND mode = ${m} AND time > ${currentTime - (60 * 60 * 24)} `))[0]
-
-            if(!rank){
-                database.awaitQuery(`INSERT INTO stats_${year}
+            WHERE user = ${id} AND mode = ${m} ORDER BY time DESC`))[0]
+            if(rank){
+                if(rank.playcount == stat.play_count) continue;
+                if(rank.time > currentTime - (60 * 60 * 24)){
+                    await database.awaitQuery(`UPDATE stats_${year}
+                    SET global = ?, country = ?, pp = ?, accuracy = ?, playcount = ?, playtime = ?, score = ?, hits = ?, level = ?, progress = ?
+                    WHERE user = ${id} AND mode = ${m} AND time = ${rank.time}`, [
+                        stat.global_rank, stat.country_rank, Math.floor(stat.pp),
+                        stat.hit_accuracy, stat.play_count, stat.play_time, stat.ranked_score,
+                        stat.total_hits, stat.level.current, stat.level.progress
+                    ])
+                } else {
+                    await database.awaitQuery(`INSERT INTO stats_${year}
+                    (user, global, country, pp, accuracy, playcount, playtime, score, hits, level, progress, mode, time) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                        id, stat.global_rank || stat.global_rank_exp, stat.country_rank, Math.floor(stat.pp || stat.pp_exp),
+                        stat.hit_accuracy, stat.play_count, stat.play_time, stat.ranked_score,
+                        stat.total_hits, stat.level.current, stat.level.progress,
+                        m, currentTime
+                    ])
+                }
+            } else {
+                await database.awaitQuery(`INSERT INTO stats_${year}
                 (user, global, country, pp, accuracy, playcount, playtime, score, hits, level, progress, mode, time) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
                     id, stat.global_rank || stat.global_rank_exp, stat.country_rank, Math.floor(stat.pp || stat.pp_exp),
@@ -66,25 +85,12 @@ export async function getUser(profiles, discord){
                     stat.total_hits, stat.level.current, stat.level.progress,
                     m, currentTime
                 ])
-                result.push(mode)
-                continue;
             }
-            
-            if(!stat.is_ranked) continue;
-            if(rank.playcount == stat.play_count) continue;
 
             process.send({ id, year, type: "profile" })
             process.send({ id, year, type: "stats" })
             process.send({ id, year, type: "card" })
             process.send({ id, year, type: "wrapped"})
-
-            await database.awaitQuery(`UPDATE stats_${year}
-            SET global = ?, country = ?, pp = ?, accuracy = ?, playcount = ?, playtime = ?, score = ?, hits = ?, level = ?, progress = ?
-            WHERE user = ${id} AND mode = ${m} AND time = ${rank.time}`, [
-                stat.global_rank, stat.country_rank, Math.floor(stat.pp),
-                stat.hit_accuracy, stat.play_count, stat.play_time, stat.ranked_score,
-                stat.total_hits, stat.level.current, stat.level.progress
-            ])
             result.push(mode)
         }
         for(let j = 0; j < result.length; j++) {
