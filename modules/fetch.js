@@ -7,6 +7,7 @@ import { WebhookClient, EmbedBuilder } from 'discord.js'
 const webhookClient = new WebhookClient({ url: trackerWebhook })
 import Logger from "cutesy.js"
 const log = new Logger().addTimestamp("hh:mm:ss").changeTag("Fetch").purple()
+const cache = {}
 
 export async function getUser(profiles, discord){
     const modes = ["osu", "taiko", "fruits", "mania"]
@@ -54,9 +55,10 @@ export async function getUser(profiles, discord){
             const mode = modes[m]
             const stat = user.statistics_rulesets[mode]
             if(!stat) continue;
-            const rank = (await database.awaitQuery(`SELECT * FROM stats_${year}
+            const rank = cache[id] || (await database.awaitQuery(`SELECT playcount, time FROM stats_${year}
             WHERE user = ${id} AND mode = ${m} ORDER BY time DESC`))[0]
             if(rank){
+                cache[id] = rank
                 if(rank.playcount == stat.play_count) continue;
                 if(rank.time > currentTime - (60 * 60 * 24)){
                     await database.awaitQuery(`UPDATE stats_${year}
@@ -67,6 +69,7 @@ export async function getUser(profiles, discord){
                         stat.total_hits, stat.level.current, stat.level.progress
                     ])
                 } else {
+                    cache[id] = { playcount: stat.play_count, time: currentTime }
                     await database.awaitQuery(`INSERT INTO stats_${year}
                     (user, global, country, pp, accuracy, playcount, playtime, score, hits, level, progress, mode, time) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
