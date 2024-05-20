@@ -2,9 +2,9 @@ import { fetchRate } from "../config.js";
 import database from "../helper/database.js";
 import { getUser, fillCache } from "./fetch.js";
 import Logger from "cutesy.js"
-import { trackerWebhook } from "../config.js";
+import { trackerUpdateWebhook } from "../config.js";
 import { WebhookClient, EmbedBuilder } from 'discord.js'
-const webhookClient = new WebhookClient({ url: trackerWebhook })
+const webhookClient = new WebhookClient({ url: trackerUpdateWebhook })
 const logger = new Logger().addTimestamp("hh:mm:ss").changeTag("Fetch").purple()
 
 const stats = await database.awaitQuery(`SELECT user, playcount, time, mode FROM (SELECT user, playcount, time, mode, ROW_NUMBER() OVER (PARTITION BY user, mode ORDER BY time DESC) AS rn FROM stats_${new Date().getFullYear()} s, users u WHERE s.user = u.userid AND u.available = 1) AS ranked WHERE rn = 1`)
