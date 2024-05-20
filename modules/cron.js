@@ -26,10 +26,10 @@ function update(){
         .setFooter({ text: `Users tracked: ${users.length}` })
         .addFields({
             name: "Stats updated",
-            value: updated.stats
+            value: String(updated.stats)
         }, {
             name: "Scores fetched",
-            value: updated.scores
+            value: String(updated.scores)
         })
         webhookClient.send({
             embeds: [embed],
