@@ -8,6 +8,10 @@ const webhookClient = new WebhookClient({ url: trackerWebhook })
 import Logger from "cutesy.js"
 const log = new Logger().addTimestamp("hh:mm:ss").changeTag("Fetch").purple()
 const cache = {}
+export const updated = {
+    stats: 0,
+    scores: 0
+}
 
 export function fillCache(data){
     for(let i = 0; i < data.length; i++){
@@ -71,6 +75,7 @@ export async function getUser(profiles, discord){
                     cache[id][m] = rank
                     continue;
                 }
+                updated.stats++
                 if(rank.time > currentTime - (60 * 60 * 24)){
                     cache[id][m] = { playcount: stat.play_count, time: currentTime }
                     database.awaitQuery(`UPDATE stats_${year}
@@ -92,6 +97,7 @@ export async function getUser(profiles, discord){
                     ])
                 }
             } else {
+                updated.stats++
                 cache[id][m] = { playcount: stat.play_count, time: currentTime }
                 database.awaitQuery(`INSERT INTO stats_${year}
                 (user, global, country, pp, accuracy, playcount, playtime, score, hits, level, progress, mode, time) 
@@ -152,6 +158,7 @@ async function getScores(id, mode, year){
             database.awaitQuery(`UPDATE scores_${year} SET pp = ${score.pp} WHERE user = ${id} AND scoreid = ${score.id} AND time = ${scoreTime}`)
             continue;
         }
+        updated.scores++
 
         values.push(
             score.user_id, score.beatmap.id, score.id || null, score.score, score.accuracy * 100, score.max_combo,

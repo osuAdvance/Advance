@@ -1,6 +1,6 @@
 import { fetchRate } from "../config.js";
 import database from "../helper/database.js";
-import { getUser, fillCache } from "./fetch.js";
+import { getUser, fillCache, updated } from "./fetch.js";
 import Logger from "cutesy.js"
 import { trackerUpdateWebhook } from "../config.js";
 import { WebhookClient, EmbedBuilder } from 'discord.js'
@@ -19,10 +19,23 @@ function update(){
             logger.send(`Updating Batch ${(Math.floor(i / 50) + 1)}/${Math.floor(users.length / 50) + 1}`)
             await getUser(chunk)
         }
-        const embed = new EmbedBuilder().setTitle("Update finished!").setColor(0x0000FF).setTimestamp(Date.now()).setFooter({ text: `Users tracked: ${users.length}` })
+        const embed = new EmbedBuilder()
+        .setTitle("Update finished!")
+        .setColor(0x0000FF)
+        .setTimestamp(Date.now())
+        .setFooter({ text: `Users tracked: ${users.length}` })
+        .addFields({
+            name: "Stats updated",
+            value: updated.stats
+        }, {
+            name: "Scores fetched",
+            value: updated.scores
+        })
         webhookClient.send({
             embeds: [embed],
         })
+        updated.stats = 0;
+        updated.scores = 0;
         logger.send("Finished update.")
         return resolve()
     })
