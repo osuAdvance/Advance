@@ -77,7 +77,7 @@ export async function getUser(profiles, discord){
                 }
                 updated.stats++
                 if(rank.time > currentTime - (60 * 60 * 24)){
-                    cache[id][m] = { playcount: stat.play_count, time: currentTime }
+                    cache[id][m] = { playcount: stat.play_count, time: rank.time }
                     database.awaitQuery(`UPDATE stats_${year}
                     SET global = ?, country = ?, pp = ?, accuracy = ?, playcount = ?, playtime = ?, score = ?, hits = ?, level = ?, progress = ?
                     WHERE user = ${id} AND mode = ${m} AND time = ${rank.time}`, [
