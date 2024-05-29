@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  push:
+    paths-ignore:
+      - '.github/**'
+    branches:
+      - main
+  workflow_dispatch:
+# Jobs
+jobs:
+  Update:
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        hosts: [lemres@10.40.10.106]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Create deployment archive
+      run: |
+        mkdir deployment
+        tar --exclude='./deployment' --exclude='./.git' --exclude='./.github' -czvf deployment/code.tar.gz .
+    - name: Stop PM2 Advance
+      run: ssh ${{ matrix.hosts }} "pm2 stop advance"
+    - name: Copy new code via SCP
+      run: scp deployment/code.tar.gz ${{ matrix.hosts }}:~/Advance
+    - name: Deploy new code
+      run: ssh ${{ matrix.hosts }} "cd ~/Advance && tar -xzf code.tar.gz && rm code.tar.gz"
+    - name: Install dependencies and start Advance
+      run: ssh ${{ matrix.hosts }} "cd ~/Advance && npm i && pm2 restart advance && pm2 save"
