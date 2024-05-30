@@ -13,12 +13,13 @@ export default async function (req, reply) {
     if(!username) return reply.code(400).send({ error: "Invalid username" })
     let user = (await database.awaitQuery(`SELECT * FROM users WHERE username_safe = "${getSafename(username)}" or discord = "${username}"`))[0]
     if(!user) return reply.code(404).send({ error: "User not in the system" })
-    if(cache[user.userid]?.[year]?.profile) return reply.send(cache[user.userid][year].profile)
+    if(cache[user.userid]?.[year]?.[mode]?.profile) return reply.send(cache[user.userid][year][mode].profile)
     if(!cache[user.userid]) cache[user.userid] = {}
     if(!cache[user.userid][year]) cache[user.userid][year] = {}
-    const scores = cache[user.userid][year].scores || await database.awaitQuery(`SELECT * FROM scores_${year} s JOIN beatmaps b ON s.beatmap = b.beatmapid WHERE s.time > ${Math.floor(new Date(year, 0, 1, 0, 0, 0, 0).getTime() / 1000)} AND s.user = ${user.userid} AND mode = ${mode}`)
-    const stats = cache[user.userid][year].stats || await database.awaitQuery(`SELECT * FROM stats_${year} WHERE user = ${user.userid} AND mode = ${mode} ORDER BY time DESC`)
-    cache[user.userid][year].stats = stats;
+    if(!cache[user.userid][year][mode]) cache[user.userid][year][mode] = {}
+    const scores = cache[user.userid][year][mode].scores || await database.awaitQuery(`SELECT * FROM scores_${year} s JOIN beatmaps b ON s.beatmap = b.beatmapid WHERE s.time > ${Math.floor(new Date(year, 0, 1, 0, 0, 0, 0).getTime() / 1000)} AND s.user = ${user.userid} AND mode = ${mode}`)
+    const stats = cache[user.userid][year][mode].stats || await database.awaitQuery(`SELECT * FROM stats_${year} WHERE user = ${user.userid} AND mode = ${mode} ORDER BY time DESC`)
+    cache[user.userid][year][mode].stats = stats;
     const peaks = new Array(...stats).sort((a, b) => a.global < b.global ? -1 : 1)
 
     user.rank = {
@@ -32,11 +33,11 @@ export default async function (req, reply) {
     delete user.discord
 
     if(scores.length < 1){
-        cache[user.userid][year].profile = user;
+        cache[user.userid][year][mode].profile = user;
         return reply.send(user)
     }
 
-    cache[user.userid][year].scores = scores;
+    cache[user.userid][year][mode].scores = scores;
 
     const recent = new Array(...scores).sort((a, b) => a.time > b.time ? -1 : 1)
     const best = new Array(...scores).sort((a, b) => a.pp > b.pp ? -1 : 1)
@@ -77,6 +78,6 @@ export default async function (req, reply) {
         recent,
         best
     }
-    cache[user.userid][year].profile = user;
+    cache[user.userid][year][mode].profile = user;
     return reply.send(user)
 }
