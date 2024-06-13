@@ -94,8 +94,11 @@ export default new class Auth extends EventEmitter {
                         await this.login()
                         return resolve(await this.request(...arguments))
                     }
-                    resolve(undefined);
-                    return await this.limiter(request);
+                    if(request.status == 404){
+                        return resolve(undefined);
+                    }
+                    await this.limiter(request);
+                    return resolve(await this.request(...arguments))
                 }
     
                 if(request.url.includes(".osz")) return resolve(request);
@@ -132,7 +135,6 @@ export default new class Auth extends EventEmitter {
     }
 
     async limiter({ status, statusText, url }){
-        if(status == 404) return;
         this.limited = true;
         authLog.red(`Encountered error: ${status} - ${statusText} (${url})`).send()
         console.error(`Code: ${status} - ${statusText} (${url})`)
