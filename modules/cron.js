@@ -10,8 +10,12 @@ const logger = new Logger().addTimestamp("hh:mm:ss").changeTag("Fetch").purple()
 const stats = await database.awaitQuery(`SELECT user, playcount, time, mode FROM (SELECT user, playcount, time, mode, ROW_NUMBER() OVER (PARTITION BY user, mode ORDER BY time DESC) AS rn FROM stats_${new Date().getFullYear()} s, users u WHERE s.user = u.userid AND u.available = 1) AS ranked WHERE rn = 1`)
 fillCache(stats);
 
+let locked = false;
+
 function update(){
+    if(locked) return;
     return new Promise(async (resolve) => {
+        locked = true;
         const users = await database.awaitQuery(`SELECT userid id, username FROM users WHERE available = 1`)
         logger.send(`Updating ${users.length} Users`)
         for(let i = 0; i < users.length; i += 50){
@@ -37,6 +41,7 @@ function update(){
         updated.stats = 0;
         updated.scores = 0;
         logger.send("Finished update.")
+        locked = false;
         return resolve()
     })
 }
