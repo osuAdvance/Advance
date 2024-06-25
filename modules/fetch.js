@@ -13,6 +13,8 @@ export const updated = {
     scores: 0
 }
 
+const modes = ["osu", "taiko", "fruits", "mania"]
+
 export function fillCache(data){
     for(let i = 0; i < data.length; i++){
         const { user, playcount, time, mode } = data[i]
@@ -22,7 +24,6 @@ export function fillCache(data){
 }
 
 export async function getUser(profiles, discord){
-    const modes = ["osu", "taiko", "fruits", "mania"]
     const ids = profiles.map((u) => u.id)
     const users = await auth.request(`/users?ids[]=${ids.join("&ids[]=")}`)
     for(let i = 0; i < profiles.length; i++){
@@ -210,5 +211,5 @@ async function getScores(id, mode, year){
     fc, mods, time, \`rank\`, passed, pp, mode, calculated, added)
     VALUES ${"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?),".repeat(values.length / 21).slice(0, -1)}`, values)
 
-    process.send({ id, year, mode: m, type: "scores" })
+    process.send({ id, year, mode: modes.indexOf(mode), type: "scores" })
 }
