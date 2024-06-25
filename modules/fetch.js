@@ -109,10 +109,10 @@ export async function getUser(profiles, discord){
                 ])
             }
 
-            process.send({ id, year, type: "profile" })
-            process.send({ id, year, type: "stats" })
-            process.send({ id, year, type: "card" })
-            process.send({ id, year, type: "wrapped"})
+            process.send({ id, year, mode: m, type: "profile" })
+            process.send({ id, year, mode: m, type: "stats" })
+            process.send({ id, year, mode: m, type: "card" })
+            process.send({ id, year, mode: m, type: "wrapped"})
             result.push(mode)
         }
         for(let j = 0; j < result.length; j++) {
@@ -210,5 +210,5 @@ async function getScores(id, mode, year){
     fc, mods, time, \`rank\`, passed, pp, mode, calculated, added)
     VALUES ${"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?),".repeat(values.length / 21).slice(0, -1)}`, values)
 
-    process.send({ id, year, type: "scores" })
+    process.send({ id, year, mode: m, type: "scores" })
 }
