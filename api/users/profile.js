@@ -11,7 +11,7 @@ export default async function (req, reply) {
     let year = (req.query?.year >> 0) || new Date().getFullYear()
     if (year < 2023 || year > 2024) year = 2024
     if(!username) return reply.code(400).send({ error: "Invalid username" })
-    let user = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ? username_safe = ? or discord = ?`, [
+    let user = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ? OR username_safe = ? OR discord = ?`, [
         username,
         getSafename(username),
         username
