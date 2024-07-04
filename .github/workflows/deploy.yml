@@ -11,9 +11,6 @@ on:
 jobs:
   Update:
     runs-on: self-hosted
-    strategy:
-      matrix:
-        hosts: [lemres@10.40.10.106]
     steps:
     - name: Deploy new code, install dependencies and start Advance
-      run: ssh ${{ matrix.hosts }} "cd ~/Advance && git pull && npm i && pm2 restart advance && pm2 save"
+      run: ssh lemres@10.40.10.106 "cd ~/Advance && git pull && npm i && pm2 restart advance && pm2 save"
