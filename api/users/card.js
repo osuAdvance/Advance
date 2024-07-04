@@ -7,7 +7,7 @@ export default async function(req, reply){
     const mode = req.query?.mode || 0
     let year = parseInt(req.query?.year >> 0) || new Date().getFullYear()
 
-    let user = (await database.awaitQuery(`SELECT * FROM users WHERE username_safe = "${getSafename(username)}" or discord = "${username}"`))[0]
+    let user = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ${username} username_safe = "${getSafename(username)}" or discord = "${username}"`))[0]
     if(!user) return reply.code(404).send({ error: "User not in the system" })
     if(cache[user.userid]?.[year]?.[mode]?.card){
         reply.header("content-type", "image/png")
