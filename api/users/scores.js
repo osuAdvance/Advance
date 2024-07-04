@@ -11,7 +11,11 @@ export default async function(req, reply){
     const mode = req.query?.mode || 0
     let year = (req.query?.year >> 0) || new Date().getFullYear()
     if (year < 2023 || year > 2024) year = 2024
-    const user = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ${username} username_safe = "${getSafename(username)}" or discord = "${username}"`))[0]
+    const user = (await database.awaitQuery(`SELECT * FROM users WHERE userid = "?" username_safe = "?" or discord = "?"`, [
+        username,
+        getSafename(username),
+        username
+    ]))[0]
     if(!user) return reply.send({ error: "User not found" })
     const scores = await database.awaitQuery(`
         SELECT * FROM scores_${year}

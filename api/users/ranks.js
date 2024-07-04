@@ -8,7 +8,11 @@ export default async function(req, reply){
     const limit = req.query?.limit || 10
     const offset = req.query?.offset || 0
     const mode = req.query?.mode || 0
-    const user = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ${username} username_safe = "${getSafename(username)}" or discord = "${username}"`))[0]
+    const user = (await database.awaitQuery(`SELECT * FROM users WHERE userid = "?" username_safe = "?" or discord = "?"`, [
+        username,
+        getSafename(username),
+        username
+    ]))[0]
     let year = (req.query?.year >> 0) || new Date().getFullYear()
     if (year < 2023 || year > 2024) year = 2024
     if(!user) return reply.send({ error: "User not found" })
