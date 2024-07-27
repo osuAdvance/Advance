@@ -17,6 +17,5 @@ export const fetchRate = 60 //minutes between each fetch
 //API
 export const host = "127.0.0.1" //use 0.0.0.0 as alternative
 export const port = 2345
-export const dataStart = 1672527600 //defines the timeframe from when the data are being loaded | ex. January 1st 2023
 export const trackerWebhook = ""
 export const trackerUpdateWebhook = ""

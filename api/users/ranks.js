@@ -1,4 +1,3 @@
-import { dataStart } from "../../config.js"
 import database from "../../helper/database.js"
 import { getSafename } from "../../helper/system.js"
 
@@ -19,7 +18,7 @@ export default async function(req, reply){
     if(!user) return reply.send({ error: "User not found" })
     const scores = await database.awaitQuery(`
         SELECT global, country, time FROM stats_${year}
-        WHERE user = ${user.userid} AND time > ${dataStart} AND mode = ${mode}
+        WHERE user = ${user.userid} AND mode = ${mode}
         ORDER BY time DESC
         LIMIT ${limit} OFFSET ${offset}
     `)
