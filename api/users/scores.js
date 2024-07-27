@@ -9,8 +9,9 @@ export default async function(req, reply){
     const limit = req.query?.limit || 10
     const offset = req.query?.offset || 0
     const mode = req.query?.mode || 0
-    let year = (req.query?.year >> 0) || new Date().getFullYear()
-    if (year < 2023 || year > 2024) year = 2024
+    let currentYear = new Date().getFullYear()
+    let year = (req.query?.year >> 0) || currentYear
+    if (year < 2023 || year > currentYear) year = currentYear
     const user = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ? OR username_safe = ? OR discord = ?`, [
         username,
         getSafename(username),

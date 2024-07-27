@@ -13,8 +13,9 @@ export default async function(req, reply){
         getSafename(username),
         username
     ]))[0]
-    let year = (req.query?.year >> 0) || new Date().getFullYear()
-    if (year < 2023 || year > 2024) year = 2024
+    let currentYear = new Date().getFullYear()
+    let year = (req.query?.year >> 0) || currentYear
+    if (year < 2023 || year > currentYear) year = currentYear
     if(!user) return reply.send({ error: "User not found" })
     const scores = await database.awaitQuery(`
         SELECT global, country, time FROM stats_${year}

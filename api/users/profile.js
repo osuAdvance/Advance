@@ -8,8 +8,9 @@ import cache from "../../constants/cache.js"
 export default async function (req, reply) {
     const username = req.params?.username
     const mode = req.query?.mode || 0
-    let year = (req.query?.year >> 0) || new Date().getFullYear()
-    if (year < 2023 || year > 2024) year = 2024
+    let currentYear = new Date().getFullYear()
+    let year = (req.query?.year >> 0) || currentYear
+    if (year < 2023 || year > currentYear) year = currentYear
     if(!username) return reply.code(400).send({ error: "Invalid username" })
     let user = (await database.awaitQuery(`SELECT * FROM users WHERE userid = ? OR username_safe = ? OR discord = ?`, [
         username,
