@@ -13,4 +13,4 @@ jobs:
     runs-on: self-hosted
     steps:
     - name: Deploy new code, install dependencies and start Advance
-      run: ssh lemres@10.40.10.106 "cd ~/Advance && git pull && npm i && pm2 restart advance && pm2 save"
+      run: ssh lemres@10.40.10.106 "cd ~/Advance && git stash && git pull && git stash drop && npm i && pm2 restart advance && pm2 save"
