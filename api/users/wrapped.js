@@ -14,9 +14,9 @@ export default async function(req, reply){
         username
     ]))[0]
     if(!user) return reply.code(404).send({ error: "User not in the system" })
-    if(cache[user.userid]?.[year]?.wrapped){
+    if(cache[user.userid]?.[mode]?.[year]?.wrapped){
         reply.header("content-type", "image/png")
-        return reply.send(cache[user.userid][year].wrapped)
+        return reply.send(cache[user.userid][mode][year].wrapped)
     }
     const request = await fetch(`http://localhost:${servicePort}/api/users/${username}/wrapped?mode=${mode}&year=${year}`)
     if(!request.ok){
