@@ -2,7 +2,7 @@ import { fetchRate } from "../config.js";
 import database from "../helper/database.js";
 import { getUser, fillCache, updated } from "./fetch.js";
 import Logger from "cutesy.js"
-import { trackerUpdateWebhook } from "../config.js";
+import { trackerUpdateWebhook, healthCheckEndpoint } from "../config.js";
 import { WebhookClient, EmbedBuilder } from 'discord.js'
 const webhookClient = new WebhookClient({ url: trackerUpdateWebhook })
 const logger = new Logger().addTimestamp("hh:mm:ss").changeTag("Fetch").purple()
@@ -42,6 +42,9 @@ function update(){
         updated.scores = 0;
         logger.send("Finished update.")
         locked = false;
+        if (healthCheckEndpoint) {
+            await fetch(healthCheckEndpoint)
+        }
         return resolve()
     })
 }

@@ -19,3 +19,4 @@ export const host = "127.0.0.1" //use 0.0.0.0 as alternative
 export const port = 2345
 export const trackerWebhook = ""
 export const trackerUpdateWebhook = ""
+export const healthCheckEndpoint = ""
